@@ -1,0 +1,14 @@
+{
+  "name": "katha-studio",
+  "private": true,
+  "description": "Local tools for human-reviewed vertical video production",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "hyperframes": "hyperframes"
+  },
+  "devDependencies": {
+    "hyperframes": "0.9.88"
+  }
+}
