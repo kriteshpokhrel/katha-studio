@@ -110,7 +110,7 @@ $env:HYPERFRAMES_NO_ORPHAN_CLEANUP = "1"
 ```
 
 For Windows x64 Whisper binaries and a model, download and verify the artifacts
-as described in the [README](../README.md#ffmpeg-hyperframes-and-whisper).
+as described in [usage](usage.md#ffmpeg-hyperframes-and-whisper).
 Set provider credentials only in the environment or a secure local store, not
 in committed files. A separate Pexels key and/or external generator is needed
 for actual stock/generated video. Confirm provider terms, privacy, licensing and
@@ -119,5 +119,6 @@ internet access. For macOS/Linux, use the platform's virtual-environment Python
 and executable paths and follow the upstream tool installation instructions.
 
 Resume with [README](../README.md), then the
-[production skill](../.github/skills/short-video-production/SKILL.md).
+[production skill](../.agents/skills/short-video-production/SKILL.md) and
+[agent-specific setup](skill-setup.md).
 The repository does not automatically schedule or publish videos.
