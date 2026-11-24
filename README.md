@@ -1,9 +1,9 @@
 # Katha Studio
 
 An agent-assisted workflow for original, faceless short videos: Nepali-first,
-configurable for other audiences, and designed around moving visuals, optional
-narration, and white/yellow captions. The production agent handles the work;
-the user need not supply footage or do routine editing.
+configurable for other audiences, with a consistent background, animated
+storyboards, narration, and white/yellow captions. The production agent handles
+the work; the user need not supply footage or do routine editing.
 
 **Status:** Early prototype, not an autonomous cinematic video editor.
 Reliable Nepali raw-speech captions, polished motion editing, quality

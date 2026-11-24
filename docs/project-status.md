@@ -3,8 +3,8 @@
 ## What we are building
 
 Katha Studio is intended to help a production agent create original, faceless,
-short vertical videos from a topic: research and script, storyboard, find or
-generate moving visuals, narrate, add captions and motion, verify quality, and
+short vertical videos from a topic: research and script, storyboard, source or
+create story-specific assets, narrate, add sound, captions and motion, verify quality, and
 deliver a platform-ready video. The viewer should not have to supply images,
 record a voiceover, correct transcripts, or perform routine editing.
 
@@ -14,7 +14,10 @@ standalone topics, approximately three two-minute videos per week, and TikTok,
 Instagram, YouTube Shorts, and Facebook. A budget below NPR 5,000/month is a
 goal, not a software-enforced limit or a promise of provider pricing.
 
-The channel identity **छेउबाट | Chheubata** is a proposal, not an approved
+The preferred format uses a consistent static background and animated
+story-specific foreground elements, with a natural-sounding Nepali male voice,
+white/yellow captions and a subtle neutral sound bed. It must remain configurable
+for others. The channel identity **छेउबाट | Chheubata** is a proposal, not an approved
 name or logo; see [brand and production](brand-and-production.md). Its name,
 handles and trademark availability have not been verified.
 
@@ -24,27 +27,34 @@ handles and trademark availability have not been verified.
 | --- | --- | --- |
 | Projects | JSON scenes; configurable dimensions, frame rate, fonts, text and visuals | The agent creates the script and scene plan; there is no topic-to-project generator |
 | Visual assets | Pexels photo/video downloads with provenance, local files, and an external generator command | Pexels requires a key; no AI-video provider, model or credentials are bundled; visual relevance and rights are not automatically verified |
-| Preparation | `prepare` prints a scene plan, acquires configured video assets, checks video streams and generates configured narration | It does not create a full storyboard, evaluate the quality of footage, or edit a cinematic video; partial runs can leave assets behind |
+| Preparation | `prepare` prints a scene plan, acquires configured video assets, checks video streams and generates configured narration | It requires video scenes and cannot make the preferred static-background storyboard; partial runs can leave assets behind |
 | Narration | Optional online Nepali Microsoft Edge voices via `edge-tts`, with provider word boundaries | Script text is sent online; pronunciation is not guaranteed |
 | Captions | White text and yellow active word for generated narration, checked against the script and audio timing | Does not consume raw-speech transcripts; accurate glyph bounds, pronunciation and readability are not guaranteed |
-| Video assembly | FFmpeg assembles images, colors or video, crops, adds captions and audio, and checks final streams and decoding | Basic cuts and looping, not cinematic editing, motion graphics or music mixing |
+| Video assembly | FFmpeg assembles images, colors or video, crops, adds captions and audio, and checks final streams and decoding | Basic cuts and looping, not a branded storyboard, motion graphics or music mixing |
 | HyperFrames | A separately editable, four-second layout/animation starter | Not connected to JSON scene rendering; not a finished production template |
 | Speech transcription | Local whisper.cpp command and multilingual models | Tested Nepali results contained serious errors; output is an unverified draft, not final captions |
 | Export | Renderer requires the explicit `final export गर` approval string | This safeguard does not prove a storyboard was reviewed; direct external tools such as HyperFrames cannot enforce it |
 
 No polished two-minute pilot has been completed. Earlier slideshow/animation
-experiments were rejected; do not present them as evidence of production quality.
+experiments were rejected. The latest Jensen Huang storyboard preview was also
+rejected for poor alignment and an overcrowded, unpolished layout. It used a
+synthetic male voice and an original ambient tone, but neither pronunciation nor
+the mix was independently listened to. Do not treat any preview as a finished
+template or evidence of production quality.
 
 ## Pending work
 
 1. Build an agent-driven research and original-script workflow with source and
-   claim tracking, plus a complete timed storyboard tied to actual shots.
-2. Select and integrate a usable licensed stock source and/or video generation
-   provider, with costs, quotas, provenance and visual-quality checks. No
-   licensed moving footage is bundled. Avoid substituting slides for real shots.
-3. Implement and evaluate a proper motion-editing pipeline: HyperFrames project
-   generation, shot selection, transitions, animation, branded graphics,
-   optional badges and punch-ins, and music/SFX mixing. Respect asset licenses.
+   claim tracking, plus a complete timed storyboard tied to actual assets.
+2. Select and integrate suitable sources and/or generation providers for
+   story-specific foreground assets and neutral ambient audio, with costs,
+   quotas, provenance and quality checks. No licensed media is bundled.
+3. Implement and evaluate a motion-editing pipeline: a configurable consistent
+   background, HyperFrames project generation, foreground animation,
+   transitions, branded graphics, and neutral sound-bed mixing. Establish and
+   check alignment, spacing, hierarchy, readable typography and safe areas
+   across each scene; avoid crowded layouts, unrelated moving backdrops and
+   static slides. Respect asset licenses.
 4. Evaluate Nepali speech and transcription against a representative benchmark;
    improve pronunciation, word alignment and caption layout. Do not silently
    treat ASR guesses or model self-assessments as ground truth.
@@ -77,14 +87,13 @@ be installed, regenerated or transferred separately, subject to their licenses.
 Prior conversation scripts and previews are not included; recreate or
 deliberately transfer any needed production materials.
 
-Clone the repository and check out the **pushed working branch**, not just the
-default branch, until that work has been merged. Obtain the branch name from the
-GitHub branch list or the push handoff. In PowerShell:
+Clone the repository and check out the feature branch containing these changes,
+not just the default branch, until that work has been merged. In PowerShell:
 
 ```powershell
 git clone https://github.com/kriteshpokhrel/katha-studio.git
 Set-Location katha-studio
-git switch --track origin/<pushed-branch-name>
+git switch --track origin/feature/storyboard-production-standards
 python --version
 ffmpeg -version
 ffprobe -version
@@ -92,8 +101,7 @@ node --version
 npm --version
 ```
 
-Replace `<pushed-branch-name>` with the actual branch name. Install Python 3.9+
-and FFmpeg/ffprobe on PATH. The bundled examples have Windows-specific font
+Install Python 3.9+ and FFmpeg/ffprobe on PATH. The bundled examples have Windows-specific font
 paths; change them to installed fonts on the new machine. Node 22+, npm and a
 compatible Chrome installation are needed for HyperFrames:
 
