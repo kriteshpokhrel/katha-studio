@@ -8,7 +8,7 @@
   "output": "output/narrated-video.mp4",
   "narration": {
     "provider": "edge",
-    "voice": "ne-NP-HemkalaNeural"
+    "voice": "ne-NP-SagarNeural"
   },
   "scenes": [
     {
