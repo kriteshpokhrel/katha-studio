@@ -1,0 +1,25 @@
+{
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "font": "C:\\Windows\\Fonts\\Nirmala.ttc",
+  "caption_font": "Nirmala UI",
+  "font_size": 70,
+  "output": "output/narrated-video.mp4",
+  "narration": {
+    "provider": "edge",
+    "voice": "ne-NP-HemkalaNeural"
+  },
+  "scenes": [
+    {
+      "duration": 8,
+      "text": "कमाइ मात्र होइन, तपाईंको पैसाको यात्रा पनि महत्त्वपूर्ण छ।",
+      "visual": {"type": "stock", "media": "video", "query": "city street people walking"}
+    },
+    {
+      "duration": 8,
+      "text": "आम्दानी र खर्च बुझेर, आफ्नो लक्ष्य अनुसार निर्णय लिनुहोस्।",
+      "visual": {"type": "stock", "media": "video", "query": "small business owner working"}
+    }
+  ]
+}

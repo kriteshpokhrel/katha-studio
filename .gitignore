@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+output/
+assets/
+.env
+node_modules/
+.tools/
+transcripts/
+.hyperframes/
+Raw Footage/
+Exports/
