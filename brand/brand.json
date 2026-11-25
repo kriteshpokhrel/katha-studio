@@ -1,0 +1,22 @@
+{
+  "name": "Katha Studio",
+  "mark": "क",
+  "handle": "@katha.studio",
+  "tagline": "हरेक खबर, एउटा छोटो कथा",
+  "colors": {
+    "paper": "#F2EEE6",
+    "dot": "#D9D3C7",
+    "ink": "#151413",
+    "muted": "#7A756C",
+    "line": "#DDD7CB",
+    "card": "#FFFDF8",
+    "accent": "#FF4F1F",
+    "on_accent": "#FFFFFF"
+  },
+  "fonts": "fonts",
+  "outro": {
+    "comment_prompt": "कमेन्टमा लेख्नुहोस्",
+    "follow": "Follow",
+    "following": "Following"
+  }
+}

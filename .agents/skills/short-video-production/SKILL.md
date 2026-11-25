@@ -10,12 +10,27 @@ Use this workflow for original, agent-reviewed short videos. Ask for the intende
 The production agent does the research, writing, asset sourcing, editing and quality checks; do not delegate routine manual work to the user. AI judgments and technical checks are not proof of factual, transcription, pronunciation, visual or licensing accuracy. If a necessary check cannot be done reliably, disclose the blocker instead of calling the output finished. Preserve the user's explicit final-export approval.
 
 1. Define the topic, audience, platform, duration, and budget. Research and fact-check claims. Write an original script, not a close paraphrase of a book or reel. Avoid promising investment returns. Do not send private text to external providers without permission.
-2. Show a storyboard before production: map each beat to spoken words, story-specific foreground assets, animation, captions, sound and source/license. Use a consistent, restrained static branded background with animated editorial elements; avoid unrelated stock footage, generic icon slides and copying a reference's artwork. The name and identity remain proposals. Adapt the look for other users' configured brands.
-3. Use original or properly licensed assets appropriate to the story; check attribution, costs, reuse rights and likeness restrictions. A source reel is inspiration only. The CLI's `prepare` currently requires video scenes and cannot produce the preferred branded storyboard; a separate composition/editing workflow is needed. No AI-video model is bundled.
-4. For this channel, try a natural-sounding Nepali male voice: the narrated example explicitly selects `ne-NP-SagarNeural`. Voices are configurable; the implementation's fallback remains `ne-NP-HemkalaNeural`. Synthesis sends script text to Microsoft's online service; use only with permission and check its terms. Verify pronunciation, timing and quality rather than assuming a male voice is more natural.
-5. Add a subtle, neutral original or licensed ambient sound bed under speech, with smooth starts and endings; it must never compete with narration. Record the source, license and costs, and verify voice intelligibility and clipping. The CLI does not currently mix music with generated narration; use a separate editing workflow or disclose the limitation. HyperFrames' starter is only an editable layout test, not an automatic branded-storyboard generator. For supplied speech, `transcribe` produces an unverified draft; never use it as final captions or ask the user to repair it. For generated narration use provider word timings and white/yellow captions. Target 1080 × 1920 at 30 fps and keep text within x 65–916, y 270–1250; inspect actual glyph bounds, contrast and platform overlays.
-6. Only after the user explicitly says `final export गर`, run `python -m katha render <project> --approval "final export गर"` or perform a final HyperFrames export. Do not write to `Exports` beforehand. Watch the complete output with audio. Check actual motion, visual relevance, pronunciation, caption synchronization, clipping, duration, factual claims, and attribution. Record stock provenance and provider costs. Disclose missing assets, credentials, or failed generation rather than substituting a slideshow and calling it an AI video. Do not publish unchecked output.
+2. Write the reel as a beat script, following `docs/reel-pipeline.md` and `examples/reel/jensen-huang.json`:
+   - one short spoken line per beat (10 words or fewer), with a keyword;
+   - an animated component per beat (photo, card, swap, counter, stamp, checklist/list, timeline), cued to spoken words;
+   - optional numbered steps;
+   - a final outro that asks for a comment.
 
-For optional raw-footage edits, transcription, cuts, punch-ins, badges, motion graphics, music and sound effects require editing outside the current CLI. For a before/after comparison, use real source and edited footage; show the voiceover script first and storyboard before the export gate. Neither face-touch detection nor ElevenLabs is integrated.
+   Use the configured brand kit (`brand/brand.json`; a proposal until approved). Avoid unrelated stock footage and copying a reference's artwork, wording or music.
+3. Use only original or properly licensed photos, with a credit. Check attribution, reuse rights and likeness restrictions. A source reel is inspiration only. No AI-video model is bundled.
+4. Run `python -m katha reel <project.json>`. It does all of the following:
+   - narrates with the configured edge-tts voice (default `ne-NP-SagarNeural`; script text goes to Microsoft's online service, so use only with permission);
+   - aligns words to beats;
+   - renders with HyperFrames;
+   - mixes an original music bed and SFX with ducking and loudness normalisation;
+   - writes QA results and a storyboard.
+
+   If the build fails, fix the script (alignment, keywords, cues) or the layout and re-run. Do not hand the problem to the user.
+5. Watch the preview and the storyboard. Check facts, pronunciation, visual relevance, caption sync and the mix, as well as the automated QA. Show the user the storyboard and preview.
+6. Only after the user explicitly says `final export गर`, run `python -m katha reel <project.json> --approval "final export गर"`. This copies the passing, unchanged preview to `Exports`. Disclose synthetic speech and credit sources. Do not publish unchecked output.
+
+For footage-based scene videos, use the older `render`, `prepare`, `fetch`, `generate`, `narrate` and `transcribe` commands described in `docs/usage.md`.
+
+For optional raw-footage edits, transcription, cuts, punch-ins and badges still require editing outside the CLI. `transcribe` produces only an unverified draft; never use it as final captions, and never ask the user to repair it. For a before/after comparison, use real source and edited footage. Show the voiceover script first, then the storyboard, before the export gate. Neither face-touch detection nor ElevenLabs is integrated.
 
 Consult `docs/brand-and-production.md` for the proposed channel direction and production standards. Treat the brand name, logo, and styling as a proposal until approved. For commands, configuration details, dependencies, and limitations, see `docs/usage.md`.

@@ -38,8 +38,8 @@ These are working labels, not fixed categories. A standalone video should still 
 
 - **Look:** a quiet editorial notebook, not a neon explainer template. Use a consistent, static branded background as the canvas; story-specific foreground elements carry the explanation. Keep deliberate space and restrained color. The palette is a direction, not an approved identity.
 - **Distinctive device:** one thin, short vertical *margin mark* in muted terracotta beside an occasional annotation. It connects to the name without illustrating an eye, lightbulb, speech bubble, or play button. It is not a permanent border, progress bar, or watermark.
-- **Palette:** charcoal `#262824`, paper `#EEEAE0`, muted terracotta `#A45D46`. Use these sparingly for the wordmark, cover, and margin note; footage need not be recolored. Yellow remains reserved for the spoken-word caption highlight requested for the videos—it is not the whole brand.
-- **Typography:** try [Mukta](https://fonts.google.com/specimen/Mukta) for legible Devanagari and Latin; it is available under the [SIL Open Font License](https://github.com/google/fonts/blob/main/ofl/mukta/OFL.txt). Use a medium weight for notes, bold only for captions, and a black outline or shadow over footage. The current CLI examples use Nirmala UI; Mukta is a proposed choice, not a bundled or installed font.
+- **Palette (implemented in `brand/brand.json`, proposal):** warm paper `#F2EEE6` with a subtle dot grid `#D9D3C7`, ink `#151413`, muted `#7A756C`, card `#FFFDF8`, and one accent, signal orange `#FF4F1F`, which is used for the keyword marker, the brand mark, step numbers and the Follow button. Earlier palette idea (charcoal `#262824`, paper `#EEEAE0`, terracotta `#A45D46`) is superseded unless the brand review prefers it.
+- **Typography (bundled, OFL):** [Mukta](https://fonts.google.com/specimen/Mukta) for Devanagari headlines and labels, Bricolage Grotesque for Latin names, DM Serif Display Italic for step numerals, JetBrains Mono for small tags. Licences are in `brand/fonts/`.
 - **Wordmark direction:** set `छेउबाट` plainly in a carefully spaced Devanagari wordmark, with the margin mark separated from—not embedded in—the letters. Use `CHHEUBATA` only when Latin is needed. A designer should refine the lettering, spacing, avatar, and one-color versions; no finalized logo or trademark clearance exists yet.
 - **Motion language:** animate the foreground in service of the script: reveal, connect, replace or move relevant photographs, dates, diagrams and brief annotations. A margin mark may draw on briefly for an observation, then leave. No animated logo intro, floating particles, repetitive zooms, or decorative graphs. Meaningful motion and editorial pacing matter; a succession of static text slides is not enough.
 - **Visual assets:** use story-specific original or licensed photographs, documents, motion graphics or footage as foreground elements when they add context. Do not use unrelated stock clips as a moving background or imply illustrative material depicts the actual event. Check rights, attribution, likeness, legibility and generated-asset errors.
@@ -58,11 +58,11 @@ This is a concept, not a claim that the current renderer automatically creates t
 
 ## Caption and voice standard
 
-- Nepali is the initial audience, with other languages configurable. For this channel, prefer a natural-sounding male narrator; try `ne-NP-SagarNeural` where appropriate, but do not assume a male or synthetic voice is automatically natural. Narration can be omitted when a story works without it. Review pronunciation and pacing. Disclose synthetic speech as required by the platform; do not imitate a real person's voice without permission.
-- Show short, timed word groups in **white**, highlighting the currently spoken word in **yellow**, with a dark outline. Use actual word timestamps where available. Do not place an entire paragraph on screen.
-- Starting point for a 1080 × 1920 master: 60–80 px caption font, centered in a lower-middle safe area; adjust for glyphs, screen size, backgrounds, and platform overlays. Avoid covering faces. These are starting points, not guaranteed platform-safe measurements: check each platform's current interface and preview on a phone.
-- Keep captions accurate to the spoken words, legible at normal viewing size, and synchronized through pauses and edits. Ensure the yellow remains distinguishable from the background; use the outline or adjust the shot, not tiny type.
-- Use a subtle, neutral original or licensed ambient sound bed underneath narration by default. Keep speech clear and dominant, avoid distracting melodies and abrupt starts or ends, and check for clipping. Verify the mix on phone speakers and headphones when possible; if listening is unavailable, disclose that limitation. Record sound provenance, terms and cost. The current CLI does not mix a background bed with generated narration.
+- Nepali is the initial audience, with other languages configurable. For this channel, prefer a natural-sounding male narrator. The default is `ne-NP-SagarNeural` at `+8%` rate, but a male or synthetic voice is not automatically natural. Narration can be omitted when a story works without it. Review pronunciation and pacing. Disclose synthetic speech as the platform requires, and do not imitate a real person's voice without permission.
+- **Reel captions (the `reel` command):** one short spoken line per beat (10 words or fewer), shown as a kinetic headline at the top of the safe area. Words enter as they are spoken, and an accent marker sweeps the keyword. The headline is 56–78 px, depending on line length. It is not a paragraph, and the whole script is never on screen.
+- **Footage captions (the older `render` command):** white timed word groups, with the spoken word in yellow and a dark outline, in a lower-middle safe area.
+- Keep captions accurate to the spoken words, legible at phone size, and synchronized through edits.
+- Sound: an original procedural music bed under the narration, ducked by the voice, with small SFX on beat changes and reveals. Loudness is normalised to about −14 LUFS with a peak limiter. The `reel` command does this automatically and checks it. Listen on phone speakers when possible.
 
 ## Repeatable production workflow
 
@@ -90,13 +90,14 @@ The target is **under NPR 5,000 per month**, not a guarantee. Check current loca
 
 | Capability | Current state |
 |---|---|
-| Original scripts, research, brand design, editing judgment | Human/agent workflow; not automatic |
+| Branded explainer reel (canvas, kinetic headline, animated components, steps, outro, music, SFX, mix, QA) | Implemented by `python -m katha reel`; see [reel pipeline](reel-pipeline.md) |
+| Original scripts, research, brand design, editing judgment | Production agent writes the beat script; no topic-to-project generator yet |
 | Stock photos and moving Pexels footage | API key required; provider limits and rights apply; background footage is not the preferred default |
 | AI-generated images or video | External command adapter only; no model, provider, or credentials included |
 | Nepali neural narration | Optional online provider; word timestamps and pronunciation require review |
 | White/yellow word captions | Burned in for generated narration; provider word boundaries are checked against the script and audio, but pronunciation and legibility are not automatically guaranteed |
 | Preparation | `prepare` currently requires video assets, so it cannot produce the preferred static-background storyboard; it validates streams and generates configured narration but cannot judge quality |
-| Cinematic editing, transitions, music mix and brand graphics | Manual external editing; not yet implemented |
+| Cinematic footage editing and transitions | Not implemented; the reel pipeline uses animated components instead of footage |
 | Platform adaptation and publishing | Manual; no automatic upload or scheduling |
 
 Use [the provided reference](https://www.tiktok.com/@aitips.nepali/video/7708399596870831367) as inspiration for a stable canvas and animated editorial information, not as permission to reuse its assets, narration or exact design. Review the proposed identity before treating its name, logo, or styling as final.
