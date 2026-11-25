@@ -4,6 +4,61 @@
   const graphemes = (text) =>
     Array.from(new Intl.Segmenter("ne", { granularity: "grapheme" }).segment(text), (s) => s.segment);
   const later = { immediateRender: false };
+  function phasePath(radius, degrees) {
+    const angle = ((degrees % 360) + 360) % 360;
+    const waxing = angle <= 180;
+    const terminator = Math.cos(angle * Math.PI / 180) * (waxing ? 1 : -1);
+    const points = [];
+    for (let i = 0; i <= 80; i++) {
+      const y = -radius + 2 * radius * i / 80;
+      points.push([Math.sqrt(Math.max(0, radius * radius - y * y)) * (waxing ? 1 : -1), y]);
+    }
+    for (let i = 80; i >= 0; i--) {
+      const y = -radius + 2 * radius * i / 80;
+      points.push([Math.sqrt(Math.max(0, radius * radius - y * y)) * terminator, y]);
+    }
+    return "M" + points.map(([x, y]) => `${x.toFixed(3)},${y.toFixed(3)}`).join("L") + "Z";
+  }
+
+  function buildScenes(tl) {
+    document.querySelectorAll(".scene-stage").forEach((el) => {
+      const start = Number(el.dataset.sceneStart);
+      tl.set(el, { visibility: "visible" }, start);
+      tl.set(el, { visibility: "hidden" }, start + Number(el.dataset.sceneDuration));
+    });
+    const states = new Map();
+    document.querySelectorAll("[data-scene-state]").forEach((el) => {
+      const state = { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1, angle: 0, phase: 0, draw: 1,
+        ...JSON.parse(el.dataset.sceneState) };
+      const shape = el.querySelector(":scope > g[clip-path]")?.firstElementChild || el.firstElementChild;
+      const update = () => {
+        let { x, y } = state;
+        if (state.orbit) {
+          const a = state.angle * Math.PI / 180;
+          x += state.orbit.cx + state.orbit.rx * Math.cos(a);
+          y += state.orbit.cy + state.orbit.ry * Math.sin(a);
+        }
+        el.setAttribute("transform", `translate(${x} ${y}) rotate(${state.rotation}) scale(${state.scale})`);
+        el.setAttribute("opacity", state.opacity);
+        if (el.dataset.kind === "phase") {
+          el.querySelector(".phase-light").setAttribute("d", phasePath(Number(el.dataset.radius), state.phase));
+        }
+        if (shape && typeof shape.getTotalLength === "function") {
+          const length = shape.getTotalLength();
+          shape.style.strokeDasharray = `${length}`;
+          shape.style.strokeDashoffset = `${length * (1 - state.draw)}`;
+        }
+      };
+      update();
+      states.set(el.id, { state, update });
+    });
+    const plan = JSON.parse(document.getElementById("scene-actions").textContent);
+    plan.forEach((action) => {
+      const { state, update } = states.get(action.target);
+      tl.to(state, { ...action.to, duration: action.duration, ease: "none", onUpdate: update }, action.at);
+    });
+    window.__sceneStates = states;
+  }
   const presets = {
     rise: (tl, el, t) => tl.fromTo(el, { opacity: 0, y: 46, filter: "blur(12px)" },
       { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "power3.out" }, t),
@@ -54,6 +109,7 @@
         presets[match[1]](tl, el, Number(match[2]), match[3] ? Number(match[3]) : undefined);
       });
     });
+    buildScenes(tl);
     tl.set({}, {}, Number(document.getElementById("main").dataset.duration));
     window.__timelines = window.__timelines || {};
     window.__timelines.main = tl;

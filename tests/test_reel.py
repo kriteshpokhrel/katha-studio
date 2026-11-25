@@ -177,6 +177,20 @@ class ReelTests(unittest.TestCase):
         self.assertEqual(html.count('class="w kw"'), 2)
         self.assertIn("out@1.800", html)
 
+    def test_outro_has_separate_layout_without_float_or_pulsing_cta(self):
+        _, config = reel.load_reel(self.write())
+        beat_words = [words(("पहिलो", 0), ("कुरा", 0.4), ("यहाँ", 0.8)),
+                      words(("दोस्रो", 3), ("कुरा", 3.4)),
+                      words(("कमेन्ट", 6), ("गर्नुहोस्", 6.4))]
+        page, _, _ = reel.composition(config, beat_words, [(0, 3), (3, 6), (6, 10)], {})
+        self.assertIn('class="stage outro-stage"', page)
+        outro = reel.Beat(3, config["beats"][-1], beat_words[-1], 6, 10,
+                          config["_brand"], {}).html()
+        self.assertIn('class="outro-action"', outro)
+        self.assertNotIn("pulse@", outro)
+        self.assertNotIn("float@6.", page)
+        self.assertIn('class="handle mono"', outro)
+
     @unittest.skipIf(np is None, "numpy not installed")
     def test_motion_metrics_measures_longest_hold(self):
         frames = np.zeros((8, 4, 4), dtype=np.float32)
@@ -185,6 +199,29 @@ class ReelTests(unittest.TestCase):
         metrics = reel.motion_metrics(frames, 0.25)
         self.assertEqual(metrics["max_hold"], 0.5)
         self.assertAlmostEqual(metrics["moving_share"], round(3 / 7, 3))
+
+    @unittest.skipIf(np is None, "numpy not installed")
+    def test_story_motion_excludes_closing_hold_but_not_static_content(self):
+        _, config = reel.load_reel(self.write())
+        config["profile"] = "visual_storytelling"
+        beat_words = [words(("पहिलो", 0), ("कुरा", 0.4)),
+                      words(("दोस्रो", 3), ("कुरा", 3.4)),
+                      words(("कमेन्ट", 6), ("गर्नुहोस्", 6.4))]
+        frames = np.zeros((40, 320, 180), dtype=np.float32)
+        frames[:24] = np.arange(24)[:, None, None] * 5
+        frames[24:] = frames[23]
+        with patch("katha.reel.gray_frames", return_value=frames), \
+                patch("katha.reel.loudness", return_value=(-14, -2)), \
+                patch("katha.reel.frame_at"), patch("katha.reel.outside_ink", return_value=0):
+            report = reel.quality("preview", config, sum(beat_words, []), beat_words,
+                                  [(0, 3), (3, 6), (6, 10)], [[0], [3], [6]])
+            hold = next(c for c in report["checks"] if c["check"] == "longest_static_hold_seconds")
+            self.assertTrue(hold["pass"])
+            frames[4:24] = frames[3]
+            report = reel.quality("preview", config, sum(beat_words, []), beat_words,
+                                  [(0, 3), (3, 6), (6, 10)], [[0], [3], [6]])
+            hold = next(c for c in report["checks"] if c["check"] == "longest_static_hold_seconds")
+            self.assertFalse(hold["pass"])
 
     @unittest.skipIf(np is None, "numpy not installed")
     def test_outside_ink_ignores_text_box(self):

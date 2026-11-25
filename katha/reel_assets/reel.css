@@ -15,6 +15,9 @@ body { margin: 0; background: var(--paper); }
   font-family: "Mukta", "Bricolage Grotesque", sans-serif; color: var(--ink);
 }
 .clip { position: absolute; inset: 0; }
+.scene-stage { position: absolute; visibility: hidden; left: 120px; top: 670px; width: 768px; height: 548px; }
+.scene-stage svg { width: 100%; height: 100%; overflow: hidden; }
+.scene-stage text { font-family: "Mukta", sans-serif; font-weight: 700; }
 .mono { font-family: "JetBrains Mono", monospace; letter-spacing: 0.06em; text-transform: uppercase; }
 .serif { font-family: "DM Serif Display", serif; font-style: italic; font-weight: 400; }
 
@@ -93,16 +96,19 @@ body { margin: 0; background: var(--paper); }
 .chip { display: inline-block; font-size: 22px; padding: 6px 14px; border-radius: 10px; background: var(--accent); color: var(--on-accent); margin-left: 12px; vertical-align: 8px; }
 
 /* Outro */
-.outro { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 26px; }
-.logo { display: flex; align-items: center; gap: 22px; }
-.logo .tile { width: 124px; height: 124px; border-radius: 32px; background: var(--accent); border: 4px solid var(--ink);
+.outro-stage { top: 740px; height: 696px; align-items: flex-start; }
+.outro { width: 100%; display: grid; grid-template-rows: 160px 168px 176px; gap: 96px; justify-items: center; }
+.logo { display: flex; align-items: center; gap: 32px; width: 100%; padding: 0 32px; }
+.logo .tile { width: 140px; height: 140px; flex: none; border-radius: 32px; background: var(--accent); border: 4px solid var(--ink);
   box-shadow: 8px 8px 0 var(--ink); color: var(--on-accent); font: 800 84px/1 "Mukta"; display: flex; align-items: center; justify-content: center; padding-top: 12px; }
-.logo .name { font: 800 64px/1 "Bricolage Grotesque"; letter-spacing: -0.03em; }
-.logo .tagline { font: 500 30px/1.2 "Mukta"; color: var(--muted); margin-top: 8px; }
+.logo .name { font: 800 64px/1.08 "Bricolage Grotesque", "Mukta"; letter-spacing: -0.03em; overflow-wrap: anywhere; }
+.logo .tagline { font: 500 30px/1.3 "Mukta"; color: var(--muted); margin-top: 16px; }
 .comment { width: 100%; display: flex; align-items: center; gap: 20px; background: var(--card); border: 3px solid var(--ink);
-  border-radius: 24px; box-shadow: 10px 10px 0 var(--ink); padding: 22px 26px; }
+  border-radius: 24px; box-shadow: 10px 10px 0 var(--ink); padding: 24px 32px; }
+.comment > div:last-child { min-width: 0; }
 .comment .avatar { width: 64px; height: 64px; font-size: 26px; }
-.comment .prompt { font: 500 26px/1.2 "Mukta"; color: var(--muted); }
-.comment .typed { font: 800 44px/1.2 "Bricolage Grotesque"; min-height: 54px; }
-.follow { font: 800 34px/1 "Bricolage Grotesque"; padding: 20px 44px; border-radius: 999px; border: 3px solid var(--ink); }
-.handle { font-size: 24px; color: var(--ink); }
+.comment .prompt { font: 500 30px/1.3 "Mukta"; color: var(--muted); }
+.comment .typed { font: 800 48px/1.2 "Mukta", "Bricolage Grotesque"; min-height: 58px; overflow-wrap: anywhere; }
+.outro-action { display: flex; flex-direction: column; align-items: center; gap: 28px; }
+.follow { font: 800 36px/1 "Bricolage Grotesque", "Mukta"; padding: 22px 56px; border-radius: 999px; border: 3px solid var(--ink); }
+.handle { font-size: 24px; color: var(--ink); text-transform: none; letter-spacing: 0.02em; }

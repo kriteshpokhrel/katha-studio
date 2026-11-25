@@ -16,12 +16,14 @@ import subprocess
 import tempfile
 
 from .studio import FINAL_EXPORT_APPROVAL, StudioError, audio_duration, request_bytes
+from . import scenes
 
 REPO = Path(__file__).resolve().parents[1]
 ASSETS = Path(__file__).resolve().parent / "reel_assets"
 WIDTH, HEIGHT, FPS = 1080, 1920, 30
-VISUALS = ("photo", "card", "swap", "counter", "stamp", "checklist", "list", "timeline", "outro")
+VISUALS = ("photo", "card", "swap", "counter", "stamp", "checklist", "list", "timeline", "scene", "outro")
 TEXT_BOX = (65, 270, 916, 1250)
+OUTRO_BOX = (65, 270, 916, 1520)
 COLOR_KEYS = ("paper", "dot", "ink", "muted", "line", "card", "accent", "on_accent")
 LIMITS = {
     "duration": (20.0, 150.0), "words_per_second": (1.8, 3.4), "beat_seconds": (1.0, 6.0),
@@ -69,8 +71,19 @@ def load_reel(path):
     music.setdefault("seed", 7)
     music.setdefault("bpm", 94)
     music.setdefault("volume", 0.2)
-    if not isinstance(music["volume"], (int, float)) or not 0 <= music["volume"] <= 1:
-        raise StudioError("music.volume must be between 0 and 1")
+    if isinstance(music["seed"], bool) or not isinstance(music["seed"], int) or music["seed"] < 0:
+        raise StudioError("music.seed must be a non-negative integer")
+    scenes.number(music["bpm"], "music.bpm", 60, 140)
+    scenes.number(music["volume"], "music.volume", 0, 1)
+    music.setdefault("duck_ratio", 3)
+    scenes.number(music["duck_ratio"], "music.duck_ratio", 1, 12)
+    effects = config.setdefault("sfx", {})
+    if not isinstance(effects, dict):
+        raise StudioError("sfx must be an object")
+    effects.setdefault("volume", 0.18)
+    scenes.number(effects["volume"], "sfx.volume", 0, 1)
+    if config.get("profile", "legacy") not in ("legacy", "visual_storytelling"):
+        raise StudioError("profile must be legacy or visual_storytelling")
     outro = config.setdefault("outro", {})
     outro.setdefault("tail", 2.4)
     if not isinstance(outro["tail"], (int, float)) or not 1 <= outro["tail"] <= 5:
@@ -95,6 +108,12 @@ def load_reel(path):
         if not isinstance(visual, dict) or visual.get("type") not in VISUALS:
             raise StudioError(f"{label} visual.type must be one of {', '.join(VISUALS)}")
         kind = visual["type"]
+        if "sound" in beat:
+            event = beat["sound"]
+            if not isinstance(event, dict) or event.get("kind") not in ("whoosh", "pop", "tick", "stamp", "chime"):
+                raise StudioError(f"{label} sound needs a supported kind")
+            if "cue" in event:
+                _text(event["cue"], f"{label} sound.cue")
         if (kind == "outro") != (i == len(beats)):
             raise StudioError("The last beat, and only the last beat, must use visual.type outro")
         if kind == "photo" and not (visual.get("src") or visual.get("url")):
@@ -123,6 +142,10 @@ def load_reel(path):
         raise StudioError("Beat steps must be numbered 1..N without gaps")
     brand_path = (path.parent / config.get("brand", REPO / "brand" / "brand.json")).resolve()
     config["_brand"] = load_brand(brand_path)
+    scenes.validate(config)
+    if "asset" in music:
+        if not isinstance(music["asset"], str) or config.get("assets", {}).get(music["asset"], {}).get("kind") != "audio":
+            raise StudioError("music.asset must reference a declared audio asset")
     return path, config
 
 
@@ -260,19 +283,17 @@ def anim(*specs):
 
 
 class Beat:
-    """Builds one beat's stage markup and collects the sound effects it triggers."""
+    """Builds one beat's stage markup and records story-content reveals."""
 
     def __init__(self, index, beat, words, start, end, brand, assets):
         self.i, self.beat, self.words, self.s, self.e = index, beat, words, start, end
-        self.brand, self.assets, self.sounds = brand, assets, []
+        self.brand, self.assets = brand, assets
         self.visual_events = [start]
         self.first = index == 1
 
-    def enter(self, preset, at, sound=None):
+    def enter(self, preset, at):
         if self.first and at < 0.3:
             return ""
-        if sound:
-            self.sounds.append((round(at, 3), sound))
         return f"{preset}@{at:.3f}"
 
     def slots(self, entries, earliest):
@@ -295,10 +316,9 @@ class Beat:
         if v.get("stamp"):
             at = cue_time(self.words, v["stamp_cue"], self.i) if v.get("stamp_cue") else t + 0.6
             self.visual_events.append(at)
-            self.sounds.append((round(at, 3), "stamp"))
             stamp = f'<div class="stamp" data-anim="{anim(f"stamp@{at:.3f}")}">{escape(v["stamp"])}</div>'
         credit = f'<div class="credit mono">{escape(v["credit"])}</div>' if v.get("credit") else ""
-        return (f'<div class="photo" data-anim="{anim(self.enter("rise", t, "pop"))}"><div class="frame">'
+        return (f'<div class="photo" data-anim="{anim(self.enter("rise", t))}"><div class="frame">'
                 f'<img src="{src}" alt=""></div>{stamp}{credit}</div>')
 
     def v_card(self, v, t):
@@ -308,7 +328,6 @@ class Beat:
         rows = []
         for line, at in zip(lines, times):
             self.visual_events.append(at)
-            self.sounds.append((round(at, 3), "tick"))
             tag = f'<span class="tag mono">{escape(line["tag"])}</span>' if line.get("tag") else ""
             rows.append(f'<div class="line" data-anim="{anim(f"rise@{at:.3f}")}">{tag}{escape(line["text"])}</div>')
         chip = ""
@@ -319,7 +338,7 @@ class Beat:
         eyebrow = f'<div class="eyebrow mono">{escape(v["eyebrow"])}{chip}</div>' if v.get("eyebrow") or chip else ""
         latin = " latin" if v.get("latin") else ""
         rule = f'<div class="rule" data-anim="{anim(f"drawx@{t + 0.3:.3f}:0.5")}"></div>' if lines else ""
-        return (f'<div class="card" data-anim="{anim(self.enter("pop", t, "pop"))}">{eyebrow}'
+        return (f'<div class="card" data-anim="{anim(self.enter("pop", t))}">{eyebrow}'
                 f'<div class="title{latin}">{escape(v["title"])}</div>{rule}{"".join(rows)}</div>')
 
     def person(self, p, at, highlight_at=None):
@@ -328,23 +347,20 @@ class Beat:
         if highlight_at is None:
             role = f'<span class="role" style="background:{c["line"]}">{escape(p["role"])}</span>'
         else:
-            self.sounds.append((round(highlight_at, 3), "pop"))
             role = (f'<span class="role" data-from="{c["line"]}" data-to="{c["accent"]}" data-ink-from="{c["ink"]}" '
                     f'data-ink-to="{c["on_accent"]}" style="background:{c["line"]}" '
                     f'data-anim="{anim(f"paint@{highlight_at:.3f}")}">{escape(p["role"])}</span>')
-        return (f'<div class="person" data-anim="{anim(self.enter("rise", at, "pop"))}"><div class="avatar">{escape(initials)}</div>'
+        return (f'<div class="person" data-anim="{anim(self.enter("rise", at))}"><div class="avatar">{escape(initials)}</div>'
                 f'<div><div class="name">{escape(p["name"])}</div>{role}</div></div>')
 
     def v_swap(self, v, t):
         second = cue_time(self.words, v["cue"], self.i) if v.get("cue") else t + max(0.6, (self.e - t) * 0.4)
         self.visual_events.append(second)
-        self.sounds.append((round(second - 0.25, 3), "tick"))
         arrow = f'<div class="arrow" data-anim="{anim(f"drawy@{second - 0.25:.3f}:0.3")}"></div>'
         return self.person(v["from"], t) + arrow + self.person(v["to"], second, second + 0.35)
 
     def v_counter(self, v, t):
         label = f'<div class="counter-label" data-anim="{anim(self.enter("rise", t + 0.3))}">{escape(v.get("label", ""))}</div>'
-        self.sounds.append((round(t, 3), "pop"))
         return (f'<div class="counter serif" data-from="{int(v.get("from", 0))}" data-to="{v["to"]}" '
                 f'data-prefix="{escape(v.get("prefix", ""))}" data-suffix="{escape(v.get("suffix", ""))}" '
                 f'data-anim="{anim(self.enter("pop", t), f"count@{t:.3f}:0.9")}">{v["to"]}</div>{label}')
@@ -352,10 +368,9 @@ class Beat:
     def v_stamp(self, v, t):
         at = cue_time(self.words, v["cue"], self.i) if v.get("cue") else t + 0.5
         self.visual_events.append(at)
-        self.sounds.append((round(at, 3), "stamp"))
         title = f'<div class="title" style="text-align:center">{escape(v["title"])}</div>' if v.get("title") else ""
         eyebrow = f'<div class="eyebrow mono">{escape(v["eyebrow"])}</div>' if v.get("eyebrow") else ""
-        head = f'<div data-anim="{anim(self.enter("rise", t, "pop"))}" style="text-align:center">{eyebrow}{title}</div>' if title or eyebrow else ""
+        head = f'<div data-anim="{anim(self.enter("rise", t))}" style="text-align:center">{eyebrow}{title}</div>' if title or eyebrow else ""
         return head + f'<div class="stamp big" data-anim="{anim(f"stamp@{at:.3f}")}">{escape(v["text"])}</div>'
 
     def v_checklist(self, v, t):
@@ -363,7 +378,6 @@ class Beat:
         rows = []
         for item, at in zip(items, self.slots(items, t + 0.25)):
             self.visual_events.append(at)
-            self.sounds.append((round(at + 0.15, 3), "tick"))
             rows.append(f'<div class="row" data-anim="{anim(f"rise@{at:.3f}")}"><div class="box">'
                         f'<i data-anim="{anim(f"tick@{at + 0.15:.3f}")}">✓</i></div>'
                         f'<div class="text">{escape(item["text"])}</div></div>')
@@ -374,7 +388,6 @@ class Beat:
         rows = []
         for n, (item, at) in enumerate(zip(items, self.slots(items, t + 0.25)), 1):
             self.visual_events.append(at)
-            self.sounds.append((round(at, 3), "pop"))
             rows.append(f'<div class="row" data-anim="{anim(f"rise@{at:.3f}")}"><div class="idx serif">{n}</div>'
                         f'<div class="text">{escape(item["text"])}</div></div>')
         return f'<div class="card">{"".join(rows)}</div>'
@@ -384,7 +397,6 @@ class Beat:
         nodes = []
         for item, at in zip(items, self.slots(items, t + 0.35)):
             self.visual_events.append(at)
-            self.sounds.append((round(at, 3), "tick"))
             chip = f'<span class="chip mono">{escape(item["chip"])}</span>' if item.get("chip") else ""
             nodes.append(f'<div class="node{" live" if item.get("live") else ""}" data-anim="{anim(f"rise@{at:.3f}")}">'
                          f'<div class="dot"></div><div class="when mono">{escape(str(item.get("when", "")))}</div>'
@@ -395,22 +407,19 @@ class Beat:
     def v_outro(self, v, t):
         b, c = self.brand, self.brand["colors"]
         keyword = v.get("comment_keyword") or self.beat["keyword"]
-        self.sounds += [(round(t, 3), "chime"), (round(t + 0.5, 3), "pop"), (round(t + 1.6, 3), "pop")]
         follow_at = t + 1.6
         type_at = t + 0.8
-        self.sounds += [(round(type_at + n * 0.12, 3), "tick") for n in range(min(4, len(keyword)))]
-        pulse = max(0.8, self.e - follow_at - 0.9)
         return (
             f'<div class="outro"><div class="logo" data-anim="{anim(f"pop@{t:.3f}")}"><div class="tile">{escape(b["mark"])}</div>'
             f'<div><div class="name">{escape(b["name"])}</div><div class="tagline">{escape(b["tagline"])}</div></div></div>'
             f'<div class="comment" data-anim="{anim(f"rise@{t + 0.5:.3f}")}"><div class="avatar">{escape(b["mark"])}</div>'
             f'<div><div class="prompt">{escape(b["outro"].get("comment_prompt", "Comment"))}</div>'
             f'<div class="typed" data-text="{escape(keyword)}" data-anim="{anim(f"type@{type_at:.3f}:0.6")}"></div></div></div>'
-            f'<div data-anim="{anim(f"pop@{follow_at:.3f}")}"><div class="follow" data-from="{c["card"]}" data-to="{c["accent"]}" '
+            f'<div class="outro-action" data-anim="{anim(f"rise@{follow_at:.3f}")}"><div class="follow" data-from="{c["card"]}" data-to="{c["accent"]}" '
             f'data-ink-from="{c["ink"]}" data-ink-to="{c["on_accent"]}" style="background:{c["card"]}" '
-            f'data-anim="{anim(f"paint@{follow_at + 0.5:.3f}", f"pulse@{follow_at + 0.9:.3f}:{pulse:.2f}")}">'
-            f'{escape(b["outro"].get("follow", "Follow"))}</div></div>'
-            f'<div class="handle mono" data-anim="{anim(f"fade@{follow_at:.3f}:0.4")}">{escape(b["handle"])}</div></div>'
+            f'data-anim="{anim(f"paint@{follow_at + 0.5:.3f}")}">'
+            f'{escape(b["outro"].get("follow", "Follow"))}</div>'
+            f'<div class="handle mono">{escape(b["handle"])}</div></div></div>'
         )
 
 
@@ -471,19 +480,25 @@ def composition(config, beat_words, times, assets):
     brand = config["_brand"]
     duration = times[-1][1]
     clips, sounds, visual_events = [], [], []
+    scene_html, scene_actions, scene_events = scenes.render(config, beat_words, times, assets, cue_time)
     for index, (beat, words, (s, e)) in enumerate(zip(config["beats"], beat_words, times), 1):
         last = index == len(times)
         builder = Beat(index, beat, words, s, e, brand, assets)
-        stage = builder.html()
-        sounds += builder.sounds
-        visual_events.append(builder.visual_events)
-        if index > 1:
-            sounds.append((round(max(0, s - 0.1), 3), "whoosh"))
+        is_scene = beat["visual"]["type"] == "scene"
+        stage = "" if is_scene else builder.html()
+        # Sound is editorial, not an automatic byproduct of every reveal.
+        if "sound" in beat:
+            event = beat["sound"]
+            at = cue_time(words, event["cue"], index) if event.get("cue") else s
+            sounds.append((round(at, 3), event["kind"]))
+        visual_events.append(scene_events[index - 1] if is_scene else builder.visual_events)
         exit_ = "" if last else f"out@{e - 0.2:.3f}"
+        stage_class = "stage outro-stage" if last else "stage"
+        float_anim = "" if last else f"float@{s:.3f}:{e - s:.3f}"
         clips.append(
             f'<div class="clip beat" id="beat-{index}" data-start="{s:.3f}" data-duration="{e - s:.3f}" data-track-index="{index % 2 + 1}">'
             f'{caption(index, beat, words, s, e, brand, last)}'
-            f'<div class="stage" data-anim="{anim(exit_)}"><div class="float" data-anim="{anim(f"float@{s:.3f}:{e - s:.3f}")}">{stage}</div></div></div>')
+            f'<div class="{stage_class}" data-anim="{anim(exit_)}"><div class="float" data-anim="{anim(float_anim)}">{stage}</div></div></div>')
     variables = "".join(f"--{k.replace('_', '-')}:{v};" for k, v in brand["colors"].items())
     page = f"""<!doctype html>
 <html lang="ne"><head><meta charset="utf-8"><title>{escape(config["title"])}</title>
@@ -492,7 +507,9 @@ def composition(config, beat_words, times, assets):
 <body><div id="main" data-composition-id="main" data-width="{WIDTH}" data-height="{HEIGHT}" data-duration="{duration:.3f}">
 {header(config, times, duration)}
 {"".join(clips)}
+{scene_html}
 </div>
+<script id="scene-actions" type="application/json">{scene_actions}</script>
 <script src="assets/gsap.min.js"></script><script src="assets/reel.js"></script>
 </body></html>
 """
@@ -561,6 +578,7 @@ def build(project_path, config, work_dir):
     beat_words = align(config["beats"], words)
     times = timing(beat_words, config["outro"]["tail"])
     images = collect_images(config, project_path.parent, cache, assets_dir)
+    images.update(scenes.collect(config, project_path.parent, assets_dir, times))
     page, sounds, visual_events = composition(config, beat_words, times, images)
     (build_dir / "index.html").write_text(page, encoding="utf-8")
     return voice, words, beat_words, times, sounds, visual_events
@@ -617,10 +635,11 @@ def render_video(build_dir, output):
         raise StudioError("HyperFrames did not produce a video")
 
 
-def mix(silent, voice, music_wav, sfx_wav, volume, duration, output):
+def mix(silent, voice, music_wav, sfx_wav, volume, duration, output, sfx_volume=0.18, duck_ratio=3):
     graph = (f"[1:a]aresample=48000,aformat=channel_layouts=stereo,asplit=2[v1][v2];"
-             f"[2:a]volume={volume}[m];[m][v2]sidechaincompress=threshold=0.02:ratio=8:attack=15:release=350[duck];"
-             f"[v1][duck][3:a]amix=inputs=3:normalize=0:duration=longest,"
+             f"[2:a]volume={volume}[m];[m][v2]sidechaincompress=threshold=0.06:ratio={duck_ratio}:attack=40:release=450[duck];"
+             f"[3:a]volume={sfx_volume},lowpass=f=3000[fx];"
+             f"[v1][duck][fx]amix=inputs=3:normalize=0:duration=longest,"
              f"loudnorm=I=-14:TP=-2:LRA=11,aresample=48000,"
              f"alimiter=limit=0.668:attack=2:release=50:level=disabled[a]")
     execute([tool("ffmpeg"), "-hide_banner", "-loglevel", "error", "-y", "-i", str(silent), "-i", str(voice),
@@ -688,7 +707,7 @@ def hex_rgb(value):
 def quality(video, config, words, beat_words, times, visual_events):
     duration = times[-1][1]
     spoken = words[-1]["end"] - words[0]["start"]
-    checks = visual_pacing(times, visual_events)
+    checks = visual_pacing(times, visual_events) + storytelling_checks(config, times)
 
     def check(name, value, ok, limit):
         checks.append({"check": name, "value": value, "limit": limit, "pass": bool(ok)})
@@ -706,27 +725,46 @@ def quality(video, config, words, beat_words, times, visual_events):
     lo, hi = LIMITS["lufs"]
     check("integrated_lufs", lufs, lo <= lufs <= hi, f"{lo} to {hi}")
     check("true_peak_dbtp", peak, peak <= LIMITS["true_peak"], f"<= {LIMITS['true_peak']}")
-    motion = motion_metrics(gray_frames(video, 4, 180, 320), 0.25)
+    frames = gray_frames(video, 4, 180, 320)
+    # A static brand canvas dilutes small but substantive diagram changes.
+    # In storytelling mode exclude captions/chrome and the intentional closing hold.
+    if config.get("profile") == "visual_storytelling":
+        frames = frames[:math.ceil(times[-1][0] * 4), 112:203, 20:148]
+    motion = motion_metrics(frames, 0.25)
     check("moving_share", motion["moving_share"], motion["moving_share"] >= LIMITS["moving_share"], f">= {LIMITS['moving_share']}")
     check("longest_static_hold_seconds", motion["max_hold"], motion["max_hold"] <= LIMITS["max_hold"], f"<= {LIMITS['max_hold']}")
     paper = hex_rgb(config["_brand"]["colors"]["paper"])
     worst = 0
-    for s, e in times:
-        for at in (s + (e - s) * 0.55, e - 0.3):
-            worst = max(worst, outside_ink(frame_at(video, min(at, duration - 0.05)), paper))
+    for index, (s, e) in enumerate(times):
+        box = OUTRO_BOX if index == len(times) - 1 else TEXT_BOX
+        for at in (s + 0.3, s + (e - s) * 0.55, e - 0.3):
+            worst = max(worst, outside_ink(frame_at(video, min(at, duration - 0.05)), paper, box))
     check("pixels_outside_text_box", worst, worst <= 200, "<= 200")
     return {"passed": all(c["pass"] for c in checks), "mean_frame_change": motion["mean_change"], "checks": checks}
 
 
 def storyboard_image(video, times, image):
     with tempfile.TemporaryDirectory(prefix="katha-board-") as temp:
-        for n, (s, e) in enumerate(times, 1):
-            execute([tool("ffmpeg"), "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{min(e - 0.3, s + (e - s) * 0.7):.3f}",
+        samples = [min(e - 0.1, s + (e - s) * fraction) for s, e in times for fraction in (0.25, 0.75)]
+        for n, at in enumerate(samples, 1):
+            execute([tool("ffmpeg"), "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{at:.3f}",
                      "-i", str(video), "-frames:v", "1", "-vf", "scale=270:480", str(Path(temp) / f"f{n:03d}.png")])
-        columns = min(6, len(times))
-        rows = math.ceil(len(times) / columns)
+        columns = min(6, len(samples))
+        rows = math.ceil(len(samples) / columns)
         execute([tool("ffmpeg"), "-hide_banner", "-loglevel", "error", "-y", "-framerate", "1", "-i", str(Path(temp) / "f%03d.png"),
                  "-vf", f"tile={columns}x{rows}:padding=8:margin=8:color=white", "-frames:v", "1", str(image)])
+
+
+def storytelling_checks(config, times):
+    share, text_run = scenes.coverage(config, times)
+    if config.get("profile") != "visual_storytelling":
+        return []
+    return [
+        {"check": "pictorial_duration_share", "value": share, "limit": ">= 0.75", "pass": share >= 0.75},
+        {"check": "consecutive_text_beats", "value": text_run, "limit": "<= 1", "pass": text_run <= 1},
+    ]
+
+
 def storyboard_plan(config, times, visual_events, markdown):
     def cell(value):
         return str(value).replace("|", r"\|").replace("\n", " ")
@@ -743,6 +781,25 @@ def storyboard_plan(config, times, visual_events, markdown):
     if sources:
         lines += ["", "## Sources"] + [f"- {source}" for source in sources]
     credits = [b["visual"]["credit"] for b in config["beats"] if b["visual"].get("credit")]
+    for index, beat in enumerate(config["beats"], 1):
+        v = beat["visual"]
+        if v["type"] == "scene":
+            lines += ["", f"## Beat {index}: {v['scene']}", "", v["purpose"]]
+            lines += [f"- {a.get('cue', 'beat start')}: {a['target']} → {a['to']} "
+                      f"({a.get('duration', 0.5)}s). {a['meaning']}" for a in v.get("actions", [])]
+        if beat.get("sound"):
+            lines += [f"- Sound beat {index}: {beat['sound']}"]
+    share, text_run = scenes.coverage(config, times)
+    lines += ["", "## Review", f"- Structural pictorial duration share: {share:.0%}.",
+              f"- Longest text-only sequence: {text_run} beats.",
+              "- These structural checks do not prove relevance, accuracy, meaningful motion or pleasant sound.",
+              "- Contact sheet: two frames per beat, chronological left to right.",
+              "- Review full preview, pronunciation, sound, factual diagrams, rights and platform overlays."]
+    for ident, asset in config.get("assets", {}).items():
+        credits.append(f"{ident}: {asset['credit']} | {asset['license']} | {asset.get('source', 'original')} "
+                       f"| {asset['origin']} | {asset['src']}")
+        if asset["origin"] == "generated":
+            credits.append(f"{ident} generation: {asset['provider']} | prompt: {asset['prompt']} | cost: {asset['cost']}")
     if credits:
         lines += ["", "## Credits"] + [f"- {credit}" for credit in credits]
     markdown.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -752,7 +809,17 @@ def project_fingerprint(path, config):
     brand_file = json.dumps({k: v for k, v in config["_brand"].items() if not k.startswith("_")}, sort_keys=True, ensure_ascii=False)
     code = [Path(__file__).read_bytes(), (Path(__file__).parent / "speech.py").read_bytes(),
             (Path(__file__).parent / "sound.py").read_bytes(),
+            Path(scenes.__file__).read_bytes(),
             (ASSETS / "reel.js").read_bytes(), (ASSETS / "reel.css").read_bytes()]
+    dependencies = scenes.local_files(config, Path(path).parent)
+    dependencies += [(f"photo-{i}", (Path(path).parent / b["visual"]["src"]).resolve())
+                     for i, b in enumerate(config["beats"], 1)
+                     if b["visual"]["type"] == "photo" and b["visual"].get("src")]
+    dependencies += [(f"font-{p.name}", p) for p in sorted(config["_brand"]["_fonts"].glob("*.ttf"))]
+    for ident, dependency in dependencies:
+        if not dependency.is_file():
+            raise StudioError(f"Dependency {ident} not found: {dependency}")
+        code += [ident, preview_hash(dependency)]
     return file_hash(Path(path).read_bytes(), brand_file, *code)
 
 
@@ -804,18 +871,26 @@ def reel(project, approval=None):
     plan_path = out_dir / f"{stem}-storyboard.md"
     storyboard_plan(config, times, visual_events, plan_path)
     print(f"Storyboard plan: {plan_path}")
-    pacing = visual_pacing(times, visual_events)
+    pacing = visual_pacing(times, visual_events) + storytelling_checks(config, times)
     failed_pacing = [c for c in pacing if not c["pass"]]
     if failed_pacing:
-        detail = ", ".join(f"{c['check']}: {c['value']}s" for c in failed_pacing)
+        detail = ", ".join(f"{c['check']}: {c['value']}" for c in failed_pacing)
         raise StudioError(f"Story-content reveal gap exceeds {LIMITS['visual_gap']}s: {detail}; split or add cued content")
     print(f"Rendering {duration:.1f}s with HyperFrames...")
     silent = build_dir / "silent.mp4"
     render_video(build_dir / "composition", silent)
     music = config["music"]
-    sound.write_wav(build_dir / "music.wav", sound.music_bed(duration, music["bpm"], music["seed"]))
+    if music.get("asset"):
+        music_source = (root / config["assets"][music["asset"]]["src"]).resolve()
+        execute([tool("ffmpeg"), "-hide_banner", "-loglevel", "error", "-y", "-stream_loop", "-1",
+                 "-i", str(music_source), "-t", f"{duration:.3f}", "-ar", "48000", "-ac", "2",
+                 "-af", f"afade=t=in:d=0.6,afade=t=out:st={max(0, duration - 2)}:d=2",
+                 str(build_dir / "music.wav")])
+    else:
+        sound.write_wav(build_dir / "music.wav", sound.music_bed(duration, music["bpm"], music["seed"]))
     sound.write_wav(build_dir / "sfx.wav", sound.sfx_track(duration, sounds))
-    mix(silent, voice, build_dir / "music.wav", build_dir / "sfx.wav", music["volume"], duration, preview)
+    mix(silent, voice, build_dir / "music.wav", build_dir / "sfx.wav", music["volume"], duration, preview,
+        config["sfx"]["volume"], music["duck_ratio"])
     print("Running quality checks...")
     qa = quality(preview, config, words, beat_words, times, visual_events)
     qa["fingerprint"] = fingerprint

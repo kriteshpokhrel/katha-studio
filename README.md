@@ -12,6 +12,12 @@ the channel identity remains provisional, and
 research/scripting is still done by the production agent. Show the storyboard
 first; do not export until the user says **final export गर**.
 
+For the visual-storytelling proof, run
+`python -m katha reel examples\reel\moon.json`. It uses original persistent
+Sun/Earth/Moon diagrams, narration-cued motion, a continuous music bed and sparse
+explicit effects. The pipeline also accepts local licensed images/recordings
+through its media manifest; see the reel documentation.
+
 ## Documentation
 
 - [Branded reel pipeline (recommended)](docs/reel-pipeline.md)

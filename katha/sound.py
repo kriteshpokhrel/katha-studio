@@ -8,7 +8,7 @@ import wave
 from .studio import StudioError
 
 RATE = 48000
-# Semitone offsets from A3 (220 Hz): Am7, Fmaj7, Cmaj7, G6. Two bars each.
+# Semitone offsets from A3 (220 Hz). Two bars each.
 PROGRESSION = ([0, 3, 7, 10], [-4, 0, 3, 7], [3, 7, 10, 14], [-2, 2, 5, 7])
 
 
@@ -71,7 +71,7 @@ def _sum(*signals):
 
 
 def music_bed(duration, bpm=94, seed=7):
-    """Return a stereo float array: pad, arpeggio, bass and soft drums, faded in and out."""
+    """Return a warm pad, sparse plucks and bass; no bright hats or snare transients."""
     np = _np()
     if not 60 <= bpm <= 140:
         raise StudioError("music.bpm must be between 60 and 140")
@@ -88,43 +88,41 @@ def music_bed(duration, bpm=94, seed=7):
             f = _freq(semi)
             for detune, pan in ((0.9985, -0.6), (1.0015, 0.6)):
                 pad = np.sin(2 * np.pi * f * detune * t) + 0.22 * np.sin(4 * np.pi * f * detune * t)
-                _add(out, start, 0.022 * pad * env, pan)
-        for step in range(16):
+                _add(out, start, 0.045 * pad * env, pan)
+        for step in range(4):
             note = chord[(0, 1, 2, 3, 2, 1, 2, 3)[step % 8]] + 12
-            _add(out, start + step * beat / 2, 0.05 * _tone(_freq(note), 0.9, 5.5), (-0.35, 0.35)[step % 2])
+            _add(out, start + step * beat * 2, rng.uniform(0.022, 0.028) * _tone(_freq(note), 1.8, 3.5, (1.0,)),
+                 (-0.35, 0.35)[step % 2])
         root = chord[0] - 12 if chord[0] > -3 else chord[0]
         for bar in range(2):
             for offset in (0, 2.5):
-                _add(out, start + (bar * 4 + offset) * beat, 0.15 * _tone(_freq(root, 110), 1.0, 3.5, (1.0, 0.0, 0.2)))
+                _add(out, start + (bar * 4 + offset) * beat, 0.1 * _tone(_freq(root, 110), 1.4, 2.5, (1.0,)))
     for b in range(int(duration / beat) + 1):
         at = b * beat
         if b % 2 == 0:
-            _add(out, at, 0.3 * _tone(110, 0.3, 14, (1.0,), sweep_to=42))
-        else:
-            _add(out, at, 0.05 * _noise(rng, 0.2, 22))
-        _add(out, at + beat / 2, 0.022 * _noise(rng, 0.06, 70), 0.3)
+            _add(out, at, 0.06 * _tone(75, 0.4, 10, (1.0,), sweep_to=45))
     out = out[: int(duration * RATE)]
     t = np.arange(len(out)) / RATE
     fade = np.minimum(1, t / 0.6) * np.clip((duration - t) / 2.2, 0, 1)
     out *= fade[:, None]
-    return out / max(1e-9, np.abs(out).max()) * 0.8
+    return out / max(1e-9, np.abs(out).max()) * 0.65
 
 
 def sfx(kind, rng):
     np = _np()
     if kind == "whoosh":
-        n = _noise(rng, 0.38, 0, band=(1800, 1400))
+        n = _noise(rng, 0.38, 0, band=(650, 400))
         t = np.arange(len(n)) / RATE
         return 0.22 * n * np.sin(np.pi * np.clip(t / 0.38, 0, 1)) ** 2
     if kind == "pop":
-        return 0.32 * _tone(520, 0.12, 32, (1.0, 0.2), sweep_to=1150)
+        return 0.18 * _tone(280, 0.18, 22, (1.0,), sweep_to=400)
     if kind == "tick":
-        return 0.26 * _sum(_tone(2400, 0.04, 140, (1.0,)), _tone(1250, 0.05, 90, (1.0,)))
+        return 0.12 * _tone(650, 0.08, 65, (1.0,))
     if kind == "stamp":
-        return _sum(0.45 * _tone(150, 0.2, 18, (1.0, 0.3), sweep_to=55), 0.18 * _noise(rng, 0.12, 40))
+        return 0.2 * _tone(120, 0.22, 16, (1.0,), sweep_to=65)
     if kind == "chime":
-        late = np.concatenate([np.zeros(int(0.09 * RATE)), _tone(1975.5, 1.1, 3.4, (1.0, 0.15))])
-        return 0.16 * _sum(_tone(1318.5, 1.2, 3.2, (1.0, 0.15)), late)
+        late = np.concatenate([np.zeros(int(0.12 * RATE)), _tone(659.25, 1.1, 3.4, (1.0,))])
+        return 0.1 * _sum(_tone(440, 1.2, 3.2, (1.0,)), late)
     raise StudioError(f"Unknown sound effect: {kind}")
 
 

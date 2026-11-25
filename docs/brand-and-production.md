@@ -47,6 +47,7 @@ These are working labels, not fixed categories. A standalone video should still 
 - **Visual assets:** use story-specific original or licensed photographs, documents, motion graphics or footage as foreground elements when they add context. Do not use unrelated stock clips as a moving background or imply illustrative material depicts the actual event. Check rights, attribution, likeness, legibility and generated-asset errors.
 - **On-screen hierarchy:** story-specific foreground first; short captions second; optional annotation or channel signature last. Keep the signature restrained and the background consistent without treating the proposed name or logo as approved.
 - **Layout quality:** align elements to a deliberate grid, use consistent margins and spacing, and give each beat a clear visual focal point. Check text size, contrast, line breaks and actual bounds at phone size; do not crowd the canvas with unrelated labels or competing cards. The rejected pilot did not meet this standard.
+- **Outro spacing:** keep identity, comment and follow/handle in separate groups, with 96 px between them and no perpetual pulse/float. The outro can extend to y 1520, leaving the bottom 400 px clear; other beats retain y 1250. Check the target platform's actual overlays.
 
 ### One episode, three applications
 
@@ -64,7 +65,34 @@ This is a concept, not a claim that the current renderer automatically creates t
 - **Reel captions (the `reel` command):** one short script line per beat (10 words or fewer), shown as a kinetic headline at the top of the safe area. Caption text comes from the script; optional word-level pronunciations can differ. The provider's word boundaries time the reveal, and an accent marker sweeps the keyword. Unmatched or ambiguous alignment fails rather than substituting provider text. The headline is 56–78 px, depending on line length.
 - **Footage captions (the older `render` command):** white timed word groups, with the spoken word in yellow and a dark outline, in a lower-middle safe area.
 - Keep captions accurate to the spoken words, legible at phone size, and synchronized through edits.
-- Sound: an original procedural music bed under the narration, ducked by the voice, with small SFX on beat changes and reveals. Loudness is normalised to about −14 LUFS with a peak limiter. The `reel` command does this automatically and checks it. Listen on phone speakers when possible.
+- Sound: a warm original procedural bed or reviewed local licensed music under the narration. Use sparse, explicitly cued SFX, not an effect on every transition/reveal. `music.volume`, `music.duck_ratio` and `sfx.volume` control balance independently; effects receive a 3 kHz low-pass. Loudness is normalised to about −14 LUFS with a peak limiter. These measurable controls cannot replace listening on phone speakers.
+
+### Approved audio baseline
+
+On 2026-11-25, the user approved the Moon **audio-only** revision after its music
+gain was halved from 0.4 to 0.2 (approximately -6 dB). Use this balance as the
+starting point for new reels, rather than reverting to the louder preview:
+
+```json
+{
+  "music": {"seed": 12, "bpm": 78, "volume": 0.2, "duck_ratio": 2},
+  "sfx": {"volume": 0.15}
+}
+```
+
+These settings are saved in `examples/reel/moon.json`. They are an explicit
+production baseline, not a change to every omitted-field CLI default. Keep
+narration in front, with continuous quiet music and sparse, cued effects; the
+Moon proof uses only a pop and a chime. Seed/BPM describe that original bed,
+not a requirement to use identical music for every topic. Different voices,
+recordings and licensed beds still need balance review; gain 0.2 does not
+guarantee the same perceived loudness across source material.
+
+The approved reference was `output/moon-quieter-music.mp3` (generated, not
+tracked). The previous video preview still contains the louder mix: regenerate
+it from the saved project before any final export. This audio approval does
+not approve the full video, channel identity, pronunciation independently,
+or final export; the exact **final export गर** gate remains required.
 
 ## Repeatable production workflow
 
@@ -73,7 +101,7 @@ The production agent carries out research, scripting, sourcing, editing and qual
 1. **Idea and brief.** Choose the audience, one takeaway, series label if appropriate, format, intended duration, and spending cap. Separate a book's ideas from its copyrighted wording and audiovisual adaptations.
 2. **Research.** Cross-check claims with primary or reputable sources. Keep URLs, access dates, assumptions, and limitations. Financial, health, legal, and other consequential topics need extra care and must not present generic educational content as personalized advice.
 3. **Script.** Write an original hook, context, explanation or example, and a clear takeaway. Plan for roughly two minutes when the story supports it; do not pad. Make each line easy to say naturally in Nepali.
-4. **Storyboard review.** The reel pipeline writes a timed plan before its preview render, including caption, pronunciation, visual type and planned reveals. The production agent checks relevance, animation, sound and source/license details; the generated table alone does not establish them. The pipeline rejects gaps over three seconds between planned story-content reveals in non-outro beats, without counting decorative motion. Mark assets as licensed, original, or generated and identify missing items.
+4. **Storyboard review.** Use `profile: visual_storytelling` for new episodes. Choose the visible action for each line before its caption: original screen recording when demonstrating software, otherwise relevant imagery or a persistent object scene. The pipeline writes purposes, cued actions, sounds and source/license details before rendering; it rejects gaps over three seconds and requires at least 75% pictorial content duration with no consecutive text-only sequence. These structural gates cannot establish relevance. The contact sheet contains two frames per beat to expose changes rather than just slide layouts.
 5. **Acquire and review assets.** Source or create the foreground elements and sound appropriate to the story. Review people and brands, audio, licenses, and creator credits. Record provider/model, prompt where relevant, costs, and provenance. Do not ingest a source reel as reusable content without rights.
 6. **Narrate and caption.** Generate or record speech, review pronunciation, and align captions to the reviewed script. `reel` uses an accent-highlighted headline; the older `render` command uses white/yellow captions. Confirm that edits do not desynchronize audio and text.
 7. **Edit and finish.** The `reel` command assembles branded components, transitions, narration, a procedural music bed and effects. The older `render` workflow supports basic scene assembly, not automatic cinematic editing or music mixing. Aim for 1080 × 1920 at 30 fps. Keep text within x 65–916 and y 270–1250, then check platform overlays and real text bounds; sampled pixel checks cannot guarantee glyph bounds or readability.
@@ -99,7 +127,7 @@ The target is **under NPR 5,000 per month**, not a guarantee. Check current loca
 | Nepali neural narration | Online Edge provider; optional per-word spoken forms; timestamps and pronunciation require review |
 | White/yellow word captions | Burned in for generated narration; provider word boundaries are checked against the script and audio, but pronunciation and legibility are not automatically guaranteed |
 | Preparation | `prepare` currently requires video assets, so it cannot produce the preferred static-background storyboard; it validates streams and generates configured narration but cannot judge quality |
-| Cinematic footage editing and transitions | Not implemented; the reel pipeline uses animated components instead of footage |
+| Foreground screen recordings and media | Local images and muted MP4s are supported inside persistent scenes, with rights metadata and stream/length checks; no automatic recording, source offsets or cinematic cut editor |
 | Platform adaptation and publishing | Manual; no automatic upload or scheduling |
 
 Use [the provided reference](https://www.tiktok.com/@aitips.nepali/video/7708399596870831367) as inspiration for a stable canvas and animated editorial information, not as permission to reuse its assets, narration or exact design. Review the proposed identity before treating its name, logo, or styling as final.

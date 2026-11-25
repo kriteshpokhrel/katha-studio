@@ -30,6 +30,8 @@ has been checked for availability.
 | --- | --- | --- |
 | Branded reels | `reel` command: beat script → script-owned captions and optional pronunciation forms → timed storyboard and story-reveal pacing gate → HyperFrames/GSAP preview → sound mix → QA and gated export. See [reel pipeline](reel-pipeline.md) | Agent writes the beat script; voice is synthetic; timing and pixel checks cannot establish correctness, visual relevance or taste |
 | Brand kit | Selected Saffron Signal colours in `brand/brand.json`, configurable mark, handle and outro text; bundled OFL fonts | Name, mark and handle remain provisional |
+| Visual storytelling | Persistent SVG scenes, narration-cued object motion, image/video manifest, source/rights records, foreground-motion and pictorial-coverage gates; `examples/reel/moon.json` is the remake proof | Declarative authored scenes, not automatic topic-to-animation; coverage cannot prove relevance or factual geometry |
+| Reel sound | Warm synthetic bed or local licensed music, independent SFX gain, explicit per-beat effects, configurable ducking and effect filtering | Does not isolate reference stems or replace a listening review; video source audio is muted |
 | Projects | JSON scenes; configurable dimensions, frame rate, fonts, text and visuals | The agent creates the script and scene plan; there is no topic-to-project generator |
 | Visual assets | Pexels photo/video downloads with provenance, local files, and an external generator command | Pexels requires a key; no AI-video provider, model or credentials are bundled; visual relevance and rights are not automatically verified |
 | Preparation | `prepare` prints a scene plan, acquires configured video assets, checks video streams and generates configured narration | It requires video scenes and cannot make the preferred static-background storyboard; partial runs can leave assets behind |
@@ -41,10 +43,20 @@ has been checked for availability.
 | Export | `render` and `reel` require the explicit `final export गर` approval string; `reel` also requires a passing, unchanged QA preview whose SHA-256 matches | This safeguard does not prove a human watched the preview; direct external tools cannot enforce it |
 
 Earlier slideshow/animation experiments and the first Jensen Huang preview were
-rejected. They were replaced by the `reel` pipeline. Its sample,
+rejected. They were replaced by the `reel` pipeline. The first Moon version
+was also rejected as too text-heavy. The new Moon example uses original phase,
+reflection and orbital scenes instead of cards. It remains a review proof, not
+an approved finished template. The older sample,
 `examples/reel/jensen-huang.json`, renders a ~39 s reel that passes all
 automated checks. It has not been approved as a finished template, and its
 synthetic voice has not been reviewed by a native listener.
+
+**Audio decision (2026-11-25):** The user approved the quieter Moon audio-only
+revision: music gain 0.2 (previously 0.4), duck ratio 2, effects gain 0.15.
+The Moon project and production skill preserve this starting balance; see
+[approved audio baseline](brand-and-production.md#approved-audio-baseline).
+The last rendered video predates that audio change and must be regenerated.
+This is not full-video or final-export approval.
 
 ## Pending work
 
