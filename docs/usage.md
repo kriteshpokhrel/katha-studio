@@ -6,6 +6,8 @@ The production agent should handle research, writing, asset acquisition and revi
 
 **Starting on another machine?** See the [project status and handoff](project-status.md) for the goal, implemented capabilities, pending work, branch checkout, dependencies, and files that are not included in Git.
 
+**Making a faceless explainer?** Use the branded `reel` command described in [reel pipeline](reel-pipeline.md). The commands below (`render`, `prepare`, `fetch`, `generate`, `narrate`, `transcribe`) are the older scene and footage workflow.
+
 ## Requirements
 
 - Python 3.9 or later and FFmpeg with `libx264`, AAC, `drawtext`, and `ass`, plus ffprobe, available on your PATH. `ffmpeg -filters` lists filters; `ffmpeg -encoders` lists encoders.

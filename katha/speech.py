@@ -14,7 +14,7 @@ def spoken_text_key(value):
                    if unicodedata.category(char)[0] in ("L", "M", "N"))
 
 
-async def synthesize(text, voice, path):
+async def synthesize(text, voice, path, rate="+0%", pitch="+0Hz"):
     try:
         import edge_tts
         import aiohttp
@@ -23,7 +23,7 @@ async def synthesize(text, voice, path):
     words = []
     try:
         with path.open("wb") as audio:
-            speech = edge_tts.Communicate(text, voice, boundary="WordBoundary")
+            speech = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch, boundary="WordBoundary")
             async for chunk in speech.stream():
                 if chunk["type"] == "audio":
                     audio.write(chunk["data"])

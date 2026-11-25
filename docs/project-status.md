@@ -14,61 +14,59 @@ standalone topics, approximately three two-minute videos per week, and TikTok,
 Instagram, YouTube Shorts, and Facebook. A budget below NPR 5,000/month is a
 goal, not a software-enforced limit or a promise of provider pricing.
 
-The preferred format uses a consistent static background and animated
-story-specific foreground elements, with a natural-sounding Nepali male voice,
-white/yellow captions and a subtle neutral sound bed. It must remain configurable
-for others. The channel identity **छेउबाट | Chheubata** is a proposal, not an approved
-name or logo; see [brand and production](brand-and-production.md). Its name,
-handles and trademark availability have not been verified.
+The preferred format uses a consistent static branded canvas and animated
+story-specific components, a Nepali male voice, a kinetic headline caption with
+a highlighted keyword, and an original music bed with sound effects. It must
+remain configurable for others. The user selected the **Saffron Signal** palette;
+the shipped `brand/brand.json` uses the
+production name **Katha Studio** as a placeholder. The channel name
+**छेउबाट | Chheubata** is a separate, unapproved proposal; see
+[brand and production](brand-and-production.md). No name, handle or trademark
+has been checked for availability.
 
 ## What works today
 
 | Area | Implemented | Boundary |
 | --- | --- | --- |
+| Branded reels | `reel` command: beat script → script-owned captions and optional pronunciation forms → timed storyboard and story-reveal pacing gate → HyperFrames/GSAP preview → sound mix → QA and gated export. See [reel pipeline](reel-pipeline.md) | Agent writes the beat script; voice is synthetic; timing and pixel checks cannot establish correctness, visual relevance or taste |
+| Brand kit | Selected Saffron Signal colours in `brand/brand.json`, configurable mark, handle and outro text; bundled OFL fonts | Name, mark and handle remain provisional |
+| Visual storytelling | Persistent SVG scenes, narration-cued object motion, image/video manifest, source/rights records, foreground-motion and pictorial-coverage gates; `examples/reel/moon.json` is the remake proof | Declarative authored scenes, not automatic topic-to-animation; coverage cannot prove relevance or factual geometry |
+| Reel sound | Warm synthetic bed or local licensed music, independent SFX gain, explicit per-beat effects, configurable ducking and effect filtering | Does not isolate reference stems or replace a listening review; video source audio is muted |
 | Projects | JSON scenes; configurable dimensions, frame rate, fonts, text and visuals | The agent creates the script and scene plan; there is no topic-to-project generator |
 | Visual assets | Pexels photo/video downloads with provenance, local files, and an external generator command | Pexels requires a key; no AI-video provider, model or credentials are bundled; visual relevance and rights are not automatically verified |
 | Preparation | `prepare` prints a scene plan, acquires configured video assets, checks video streams and generates configured narration | It requires video scenes and cannot make the preferred static-background storyboard; partial runs can leave assets behind |
 | Narration | Optional online Nepali Microsoft Edge voices via `edge-tts`, with provider word boundaries | Script text is sent online; pronunciation is not guaranteed |
-| Captions | White text and yellow active word for generated narration, checked against the script and audio timing | Does not consume raw-speech transcripts; accurate glyph bounds, pronunciation and readability are not guaranteed |
+| Captions | Reel captions retain the written script and use validated provider timings; optional pronunciation mappings can differ. The older `render` command uses white/yellow timed captions | Does not consume raw-speech transcripts; pronunciation and readability are not guaranteed |
 | Video assembly | FFmpeg assembles images, colors or video, crops, adds captions and audio, and checks final streams and decoding | Basic cuts and looping, not a branded storyboard, motion graphics or music mixing |
-| HyperFrames | A separately editable, four-second layout/animation starter | Not connected to JSON scene rendering; not a finished production template |
+| HyperFrames | Generated per reel by the `reel` command; plus a separate four-second starter in `examples/hyperframes` | The older `render` command does not use HyperFrames |
 | Speech transcription | Local whisper.cpp command and multilingual models | Tested Nepali results contained serious errors; output is an unverified draft, not final captions |
-| Export | Renderer requires the explicit `final export गर` approval string | This safeguard does not prove a storyboard was reviewed; direct external tools such as HyperFrames cannot enforce it |
+| Export | `render` and `reel` require the explicit `final export गर` approval string; `reel` also requires a passing, unchanged QA preview whose SHA-256 matches | This safeguard does not prove a human watched the preview; direct external tools cannot enforce it |
 
-No polished two-minute pilot has been completed. Earlier slideshow/animation
-experiments were rejected. The latest Jensen Huang storyboard preview was also
-rejected for poor alignment and an overcrowded, unpolished layout. It used a
-synthetic male voice and an original ambient tone, but neither pronunciation nor
-the mix was independently listened to. Do not treat any preview as a finished
-template or evidence of production quality.
+Earlier slideshow/animation experiments and the first Jensen Huang preview were
+rejected. They were replaced by the `reel` pipeline. The first Moon version
+was also rejected as too text-heavy. The new Moon example uses original phase,
+reflection and orbital scenes instead of cards. It remains a review proof, not
+an approved finished template. The older sample,
+`examples/reel/jensen-huang.json`, renders a ~39 s reel that passes all
+automated checks. It has not been approved as a finished template, and its
+synthetic voice has not been reviewed by a native listener.
+
+**Audio decision (2026-11-25):** The user approved the quieter Moon audio-only
+revision: music gain 0.2 (previously 0.4), duck ratio 2, effects gain 0.15.
+The Moon project and production skill preserve this starting balance; see
+[approved audio baseline](brand-and-production.md#approved-audio-baseline).
+The last rendered video predates that audio change and must be regenerated.
+This is not full-video or final-export approval.
 
 ## Pending work
 
-1. Build an agent-driven research and original-script workflow with source and
-   claim tracking, plus a complete timed storyboard tied to actual assets.
-2. Select and integrate suitable sources and/or generation providers for
-   story-specific foreground assets and neutral ambient audio, with costs,
-   quotas, provenance and quality checks. No licensed media is bundled.
-3. Implement and evaluate a motion-editing pipeline: a configurable consistent
-   background, HyperFrames project generation, foreground animation,
-   transitions, branded graphics, and neutral sound-bed mixing. Establish and
-   check alignment, spacing, hierarchy, readable typography and safe areas
-   across each scene; avoid crowded layouts, unrelated moving backdrops and
-   static slides. Respect asset licenses.
-4. Evaluate Nepali speech and transcription against a representative benchmark;
-   improve pronunciation, word alignment and caption layout. Do not silently
-   treat ASR guesses or model self-assessments as ground truth.
-5. Add automated technical, audio and visual quality checks, including actual
-   text bounds and platform safe areas, and flag issues that cannot be verified.
-   The production agent, not the user, should do routine checking and repairs.
-6. Design an end-to-end optional raw-footage and before/after workflow. Mistake,
-   face-touch and look-away detection, synchronized comparisons, and ElevenLabs
-   are not implemented. Do not invent unavailable footage or outcomes.
-7. Finalize the brand only after approval and availability checks; add platform
-   adaptation, tracking, scheduling/publishing only if deliberately designed.
-8. Produce and assess a representative original pilot once tools, assets and
-   permissions are available. Show the storyboard first; only render/export a
-   final after the user explicitly says `final export गर`.
+1. Decide the channel name, mark and handle and check availability; the palette is selected.
+2. Build a research and original-script workflow that outputs a reel project: topic → sources and claim tracking → beat script. Today the agent writes the JSON by hand.
+3. Choose a more natural Nepali male voice provider, if budget allows. Keep edge-tts as the free default, and disclose synthetic speech.
+4. Add more component types (charts, maps, quote cards, image galleries) and validate the raised duration limit with a complete two-minute reel.
+5. Platform adaptations: cover image, titles and descriptions, and per-platform caption and safe-area variants. Scheduling and publishing are not implemented.
+6. Evaluate Nepali transcription for the optional raw-footage workflow. Mistake, face-touch and look-away detection, before/after reels and ElevenLabs are not implemented.
+7. Use vision-model QA to judge layout and visual relevance beyond the current pixel checks.
 
 AI can assist research, editing and review but cannot guarantee that claims,
 pronunciation, licensing or visual choices are correct. Stop and report an
@@ -107,9 +105,11 @@ compatible Chrome installation are needed for HyperFrames:
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements-voice.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-reel.txt
 npm ci
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
+$env:PYTHONIOENCODING = "utf-8"
+.\.venv\Scripts\python.exe -m katha reel examples\reel\jensen-huang.json
 $env:HYPERFRAMES_NO_TELEMETRY = "1"
 $env:HYPERFRAMES_NO_UPDATE_CHECK = "1"
 $env:HYPERFRAMES_NO_ORPHAN_CLEANUP = "1"

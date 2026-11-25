@@ -1,0 +1,184 @@
+{
+  "title": "चन्द्रमाको आकार किन फेरिन्छ?",
+  "topic": "आकाशको कथा · चन्द्रमा",
+  "profile": "visual_storytelling",
+  "voice": { "provider": "edge", "name": "ne-NP-SagarNeural", "rate": "+8%", "pitch": "-2Hz" },
+  "music": { "seed": 12, "bpm": 78, "volume": 0.2, "duck_ratio": 2 },
+  "sfx": { "volume": 0.15 },
+  "outro": { "tail": 2.4 },
+  "sources": [
+    "NASA, Moon Phases: https://science.nasa.gov/moon/moon-phases/",
+    "NASA, Moon Facts: https://science.nasa.gov/moon/facts/",
+    "All diagrams are original vector artwork. Schematic top view: sizes, distances and orbital tilt are not represented. Phase inset is an idealized northern-hemisphere view, not a local sky prediction."
+  ],
+  "scenes": {
+    "hook": {
+      "description": "A large lunar disc changes its visible phase without changing its circular outline.",
+      "objects": [
+        { "id": "disc", "type": "phase", "x": 384, "y": 235, "phase": 180, "attrs": { "r": 164 } },
+        { "id": "question", "type": "text", "x": 384, "y": 475, "text": "चन्द्रमा उही हो। देखिने उज्यालो बदलिन्छ।", "attrs": { "font-size": 30, "fill": "muted", "text-anchor": "middle" } }
+      ]
+    },
+    "light": {
+      "description": "Sunlight reaches a half-lit Moon and reflects toward an Earth observer; a moving dot traces the schematic light path.",
+      "objects": [
+        { "id": "incident", "type": "path", "draw": 0.05, "attrs": { "d": "M 180 215 L 458 215", "stroke": "accent", "stroke-width": 7, "fill": "none" } },
+        { "id": "reflected", "type": "path", "draw": 0, "attrs": { "d": "M 458 235 L 335 405", "stroke": "accent", "stroke-width": 5, "fill": "none" } },
+        { "id": "sun", "type": "group", "x": 95, "y": 215, "children": [
+          { "id": "sun-ring", "type": "circle", "attrs": { "r": 78, "fill": "none", "stroke": "accent", "stroke-width": 3 } },
+          { "id": "sun-disc", "type": "circle", "attrs": { "r": 62, "fill": "accent" } },
+          { "id": "sun-label", "type": "text", "y": 135, "text": "सूर्य", "attrs": { "font-size": 36, "fill": "ink", "text-anchor": "middle" } }
+        ] },
+        { "id": "moon", "type": "group", "x": 570, "y": 215, "children": [
+          { "id": "moon-night", "type": "circle", "attrs": { "r": 108, "fill": "ink" } },
+          { "id": "moon-day", "type": "path", "opacity": 0.03, "attrs": { "d": "M 0 0 L 0 108 A 108 108 0 0 1 0 -108 Z", "fill": "card", "stroke": "muted", "stroke-width": 2 } },
+          { "id": "moon-label", "type": "text", "y": 155, "text": "चन्द्रमा", "attrs": { "font-size": 36, "fill": "ink", "text-anchor": "middle" } }
+        ] },
+        { "id": "observer", "type": "group", "x": 312, "y": 435, "opacity": 0, "children": [
+          { "id": "earth", "type": "circle", "attrs": { "r": 30, "fill": "paper", "stroke": "ink", "stroke-width": 3 } },
+          { "id": "earth-land", "type": "path", "attrs": { "d": "M 0 0 L 16 6 L 10 24 L 0 14 Z", "fill": "accent" } },
+          { "id": "earth-label", "type": "text", "y": 65, "text": "पृथ्वी", "attrs": { "font-size": 28, "fill": "ink", "text-anchor": "middle" } }
+        ] },
+        { "id": "photon", "type": "circle", "x": 180, "y": 215, "opacity": 0, "attrs": { "r": 28, "fill": "accent", "stroke": "paper", "stroke-width": 3 } },
+        { "id": "note", "type": "text", "x": 384, "y": 40, "text": "प्रकाशको बाटो · सांकेतिक चित्र", "attrs": { "font-size": 26, "fill": "muted", "text-anchor": "middle" } }
+      ]
+    },
+    "lunar": {
+      "description": "Original Sun–Earth–Moon diagram with a moving Moon and a synchronized Earth-view phase inset.",
+      "objects": [
+        { "id": "orbit-label", "type": "text", "x": 315, "y": 32, "text": "माथिबाट हेर्दा", "attrs": { "fill": "muted", "font-size": 24, "text-anchor": "middle" } },
+        { "id": "view-label", "type": "text", "x": 630, "y": 80, "text": "पृथ्वीबाट देखिने रूप", "attrs": { "fill": "ink", "font-size": 25, "text-anchor": "middle" } },
+        { "id": "orbit", "type": "ellipse", "x": 312, "y": 225, "attrs": { "rx": 145, "ry": 140, "fill": "none", "stroke": "line", "stroke-width": 3 } },
+        { "id": "rays", "type": "group", "opacity": 0.2, "children": [
+          { "id": "ray-a", "type": "line", "attrs": { "x1": 110, "y1": 192, "x2": 465, "y2": 192, "stroke": "accent", "stroke-width": 3 } },
+          { "id": "ray-b", "type": "line", "attrs": { "x1": 110, "y1": 225, "x2": 465, "y2": 225, "stroke": "accent", "stroke-width": 3 } },
+          { "id": "ray-c", "type": "line", "attrs": { "x1": 110, "y1": 258, "x2": 465, "y2": 258, "stroke": "accent", "stroke-width": 3 } }
+        ] },
+        { "id": "sun", "type": "group", "x": 60, "y": 225, "children": [
+          { "id": "sun-halo", "type": "circle", "attrs": { "r": 47, "fill": "none", "stroke": "accent", "stroke-width": 2 } },
+          { "id": "sun-disc", "type": "circle", "attrs": { "r": 33, "fill": "accent" } },
+          { "id": "sun-label", "type": "text", "y": 82, "text": "सूर्य", "attrs": { "font-size": 28, "fill": "ink", "text-anchor": "middle" } }
+        ] },
+        { "id": "earth", "type": "group", "x": 312, "y": 225, "children": [
+          { "id": "earth-disc", "type": "circle", "attrs": { "r": 40, "fill": "paper", "stroke": "ink", "stroke-width": 3 } },
+          { "id": "earth-land", "type": "path", "attrs": { "d": "M 0 0 L 10 5 L 20 25 L 8 34 L 4 17 L 0 12 Z", "fill": "accent" } },
+          { "id": "earth-latitude", "type": "ellipse", "attrs": { "rx": 38, "ry": 14, "fill": "none", "stroke": "muted", "stroke-width": 2 } },
+          { "id": "earth-label", "type": "text", "y": 76, "text": "पृथ्वी", "attrs": { "font-size": 28, "fill": "ink", "text-anchor": "middle" } }
+        ] },
+        { "id": "moon", "type": "group", "orbit": { "cx": 312, "cy": 225, "rx": 145, "ry": 140 }, "angle": 180, "children": [
+          { "id": "moon-disc", "type": "circle", "attrs": { "r": 22, "fill": "ink", "stroke": "ink", "stroke-width": 2 } },
+          { "id": "moon-day", "type": "path", "attrs": { "d": "M 0 0 L 0 22 A 22 22 0 0 1 0 -22 Z", "fill": "card" } }
+        ] },
+        { "id": "phase", "type": "phase", "x": 630, "y": 225, "phase": 0, "attrs": { "r": 85 } },
+        { "id": "new-label", "type": "text", "x": 630, "y": 400, "opacity": 0, "text": "औंसी", "attrs": { "font-size": 36, "fill": "accent", "text-anchor": "middle" } },
+        { "id": "full-label", "type": "text", "x": 630, "y": 400, "opacity": 0, "text": "पूर्णिमा", "attrs": { "font-size": 36, "fill": "accent", "text-anchor": "middle" } },
+        { "id": "cycle-label", "type": "text", "x": 384, "y": 430, "opacity": 0, "text": "एउटै चरण फेरि आउन ≈ २९.५ दिन", "attrs": { "font-size": 31, "fill": "accent", "text-anchor": "middle" } },
+        { "id": "note", "type": "text", "x": 384, "y": 500, "text": "सांकेतिक चित्र · आकार, दूरी र कक्षाको ढल्काइ देखाइएको छैन", "attrs": { "font-size": 21, "fill": "muted", "text-anchor": "middle" } }
+      ]
+    }
+  },
+  "beats": [
+    {
+      "say": "चन्द्रमा कहिले गोलो, कहिले पातलो किन देखिन्छ?",
+      "keyword": "किन",
+      "visual": { "type": "scene", "scene": "hook", "purpose": "Hook: a large disc changes phase while keeping its actual round outline.",
+        "actions": [
+          { "target": "disc", "duration": 3.3, "to": { "phase": 340 }, "meaning": "Full Moon becomes a thin waning crescent, without changing its round silhouette." }
+        ] }
+    },
+    {
+      "say": "पहिलो कुरा, चन्द्रमाले आफ्नै प्रकाश बनाउँदैन।",
+      "keyword": "आफ्नै प्रकाश",
+      "visual": { "type": "scene", "scene": "light", "purpose": "Identify the actual light source instead of duplicating the caption on a card.",
+        "actions": [
+          { "target": "incident", "duration": 3, "to": { "draw": 1 }, "meaning": "Draw light travelling from the Sun to the Moon." },
+          { "target": "moon-day", "duration": 3, "to": { "opacity": 1 }, "meaning": "Reveal the Sun-facing hemisphere as the light source is introduced; this is a staged explanation, not real-time illumination." }
+        ] }
+    },
+    {
+      "say": "सूर्यको प्रकाश चन्द्रमाबाट फर्किएर हामीसम्म आउँछ।",
+      "keyword": "फर्किएर",
+      "sound": { "kind": "pop", "cue": "फर्किएर" },
+      "visual": { "type": "scene", "scene": "light", "purpose": "Trace the journey of illumination with a moving photon marker and reflected-light path.",
+        "actions": [
+          { "target": "photon", "duration": 1.1, "to": { "x": 458, "opacity": 1 }, "meaning": "Trace incoming sunlight to the Moon's surface." },
+          { "target": "photon", "cue": "फर्किएर", "duration": 1.4, "to": { "x": 335, "y": 405 }, "meaning": "Trace a reflected ray toward Earth." },
+          { "target": "reflected", "cue": "फर्किएर", "duration": 1.4, "to": { "draw": 1 }, "meaning": "Connect the reflecting surface with the observer." },
+          { "target": "observer", "cue": "हामीसम्म", "duration": 0.4, "to": { "opacity": 1 }, "meaning": "Reveal Earth at the end of the reflected light path." }
+        ] }
+    },
+    {
+      "say": "सूर्यले चन्द्रमाको आधा भाग उज्यालो पार्छ।",
+      "keyword": "आधा भाग",
+      "visual": { "type": "scene", "scene": "light", "purpose": "Focus on the Sun-facing hemisphere without changing its half-lit geometry.",
+        "actions": [
+          { "target": "moon", "duration": 2.8, "to": { "scale": 1.28, "x": 545 }, "meaning": "Enlarge the Moon to inspect its equal light and dark hemispheres." },
+          { "target": "photon", "duration": 0.3, "to": { "opacity": 0 }, "meaning": "Remove the light-path marker after the explanation." }
+        ] }
+    },
+    {
+      "say": "तर पृथ्वीबाट त्यो उज्यालो भाग कति देखिन्छ?",
+      "keyword": "कति",
+      "visual": { "type": "scene", "scene": "lunar", "purpose": "Contrast the overhead geometry with the changing Earth-view inset.",
+        "actions": [
+          { "target": "moon", "duration": 2.8, "to": { "angle": 270 }, "meaning": "Move from new toward first quarter." },
+          { "target": "phase", "duration": 2.8, "to": { "phase": 90 }, "meaning": "Half of the lit face comes into view." }
+        ] }
+    },
+    {
+      "say": "चन्द्रमा पृथ्वी वरिपरि घुम्दा, हाम्रो दृश्य बदलिन्छ।",
+      "keyword": "दृश्य बदलिन्छ",
+      "visual": { "type": "scene", "scene": "lunar", "purpose": "Keep the Earth, Sun and Moon in one continuous model while changing the viewpoint.",
+        "actions": [
+          { "target": "moon", "duration": 3.4, "to": { "angle": 540 }, "meaning": "Continue through full and last-quarter phases to new Moon." },
+          { "target": "phase", "duration": 3.4, "to": { "phase": 360 }, "meaning": "The visible lit portion shrinks to zero." }
+        ] }
+    },
+    {
+      "say": "औंसीमा उज्यालो पाटो हामीबाट पर हुन्छ।",
+      "keyword": "औंसीमा",
+      "visual": { "type": "scene", "scene": "lunar", "purpose": "Hold new-Moon geometry long enough to understand the dark Earth-facing side.",
+        "actions": [
+          { "target": "phase", "duration": 2.5, "to": { "scale": 1.5 }, "meaning": "Enlarge the dark Earth-view disc for comparison with the half-lit overhead Moon." },
+          { "target": "new-label", "duration": 0.4, "to": { "opacity": 1 }, "meaning": "Name this state briefly." }
+        ] }
+    },
+    {
+      "say": "पूर्णिमामा उज्यालो पाटो हामीतिर देखिन्छ।",
+      "keyword": "पूर्णिमामा",
+      "sound": { "kind": "chime", "cue": "उज्यालो" },
+      "visual": { "type": "scene", "scene": "lunar", "purpose": "Move to the opposite side and show the fully visible dayside.",
+        "actions": [
+          { "target": "moon", "duration": 2.5, "to": { "angle": 720 }, "meaning": "Move opposite the Sun from Earth's perspective." },
+          { "target": "phase", "duration": 2.5, "to": { "phase": 540, "scale": 1 }, "meaning": "Reveal the full illuminated disc." },
+          { "target": "new-label", "duration": 0.3, "to": { "opacity": 0 }, "meaning": "Remove the previous state's label." },
+          { "target": "full-label", "cue": "देखिन्छ", "duration": 0.2, "to": { "opacity": 1 }, "meaning": "Name full Moon after the transformation." }
+        ] }
+    },
+    {
+      "say": "यो चक्र झन्डै साढे उनन्तीस दिनमा दोहोरिन्छ।",
+      "keyword": "दोहोरिन्छ",
+      "visual": { "type": "scene", "scene": "lunar", "purpose": "Demonstrate the repeating phase cycle, distinct from the sidereal orbital period.",
+        "actions": [
+          { "target": "moon", "duration": 2.9, "to": { "angle": 1080 }, "meaning": "Repeat a complete schematic phase cycle." },
+          { "target": "phase", "duration": 2.9, "to": { "phase": 900 }, "meaning": "Return to the same phase." },
+          { "target": "cycle-label", "duration": 0.5, "to": { "opacity": 1 }, "meaning": "Label the approximately 29.5-day phase cycle." },
+          { "target": "full-label", "duration": 0.3, "to": { "opacity": 0 }, "meaning": "Clear the previous label." }
+        ] }
+    },
+    {
+      "say": "यी चरणहरू पृथ्वीको छायाँले बनेका होइनन्।",
+      "keyword": "छायाँले",
+      "visual": { "type": "scene", "scene": "lunar", "purpose": "Finish by changing phase without drawing an Earth-shadow cone.",
+        "actions": [
+          { "target": "moon", "duration": 2.8, "to": { "angle": 1170 }, "meaning": "Move to a quarter phase without an eclipse." },
+          { "target": "phase", "duration": 2.8, "to": { "phase": 990 }, "meaning": "The apparent lit portion changes through viewing geometry." }
+        ] }
+    },
+    {
+      "say": "तपाईंलाई आकाशका अरू के जान्न मन छ?",
+      "keyword": "जान्न",
+      "visual": { "type": "outro", "comment_keyword": "चन्द्रमा" }
+    }
+  ]
+}

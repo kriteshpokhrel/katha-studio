@@ -1,0 +1,95 @@
+{
+  "title": "Jensen Huang फेरि NVIDIA को CEO",
+  "topic": "टेक खबर · NVIDIA",
+  "voice": { "provider": "edge", "name": "ne-NP-SagarNeural", "rate": "+8%", "pitch": "-2Hz" },
+  "music": { "seed": 7, "bpm": 94, "volume": 0.2 },
+  "steps": { "label": "बोर्डका निर्णय" },
+  "outro": { "tail": 2.6 },
+  "sources": [
+    "NVIDIA newsroom statement on the board decision (verify the final wording before publishing)",
+    "Photo: Anders Eidesvik, CC BY 4.0, via Wikimedia Commons"
+  ],
+  "beats": [
+    {
+      "say": "राजीनामा दिएका CEO, फेरि कुर्सीमा फर्किए।",
+      "pronunciations": { "CEO": "सीईओ," },
+      "keyword": "फेरि",
+      "visual": {
+        "type": "photo",
+        "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Jensen_huang_stanford_2026-04-30_011.jpg?width=1080",
+        "credit": "Photo: Anders Eidesvik · CC BY 4.0",
+        "stamp": "फेरि CEO",
+        "stamp_cue": "फेरि"
+      }
+    },
+    {
+      "say": "एनभिडियाका सहसंस्थापक जेन्सन हुआङ, उन्नाइस सय त्रियानब्बेदेखि कम्पनीमा छन्।",
+      "keyword": "जेन्सन हुआङ",
+      "visual": {
+        "type": "card", "eyebrow": "NVIDIA", "title": "Jensen Huang", "latin": true,
+        "lines": [ { "tag": "1993", "text": "सहसंस्थापक", "cue": "सहसंस्थापक" }, { "tag": "33 वर्ष", "text": "कम्पनीको नेतृत्व", "cue": "उन्नाइस" } ]
+      }
+    },
+    {
+      "say": "उनी हटेपछि कोलेट क्रेसले अन्तरिम सीईओको जिम्मा लिइन्।",
+      "keyword": "अन्तरिम",
+      "visual": {
+        "type": "swap", "cue": "कोलेट",
+        "from": { "name": "Jensen Huang", "initials": "JH", "role": "राजीनामा" },
+        "to": { "name": "Colette Kress", "initials": "CK", "role": "अन्तरिम CEO" }
+      }
+    },
+    {
+      "say": "तेइस नोभेम्बरमा बोर्डले तीन कुरा भन्यो।",
+      "keyword": "तीन कुरा",
+      "visual": { "type": "counter", "to": 3, "label": "बोर्डका निर्णय · २३ नोभेम्बर" }
+    },
+    {
+      "say": "पहिलो, बोर्डको निर्णय सर्वसम्मत थियो।",
+      "keyword": "सर्वसम्मत", "step": 1, "step_title": "सर्वसम्मत निर्णय",
+      "visual": { "type": "stamp", "eyebrow": "BOARD VOTE", "title": "बोर्डको निर्णय", "text": "सर्वसम्मत", "cue": "सर्वसम्मत" }
+    },
+    {
+      "say": "दोस्रो, हुआङ फेरि प्रेसिडेन्ट, सीईओ र निर्देशक बने।",
+      "keyword": "प्रेसिडेन्ट", "step": 2, "step_title": "पुरानै तीन पद",
+      "visual": {
+        "type": "checklist",
+        "items": [ { "text": "प्रेसिडेन्ट", "cue": "प्रेसिडेन्ट" }, { "text": "सीईओ", "cue": "सीईओ" }, { "text": "बोर्ड निर्देशक", "cue": "निर्देशक" } ]
+      }
+    },
+    {
+      "say": "तेस्रो, क्रेस सीएफओ पदमै रहिन्।",
+      "keyword": "सीएफओ", "step": 3, "step_title": "क्रेस CFO मै",
+      "visual": {
+        "type": "swap", "cue": "सीएफओ",
+        "from": { "name": "Colette Kress", "initials": "CK", "role": "अन्तरिम CEO" },
+        "to": { "name": "Colette Kress", "initials": "CK", "role": "CFO" }
+      }
+    },
+    {
+      "say": "अमेरिकी सरकारसँग परामर्शपछि बोर्ड ढुक्क छ।",
+      "keyword": "ढुक्क",
+      "visual": {
+        "type": "card", "eyebrow": "राष्ट्रिय सुरक्षा", "title": "जोखिम देखिएन",
+        "lines": [ { "tag": "US", "text": "सरकारसँग परामर्श", "cue": "सरकारसँग" }, { "tag": "BOARD", "text": "सुरक्षा जोखिम छैन", "cue": "ढुक्क" } ]
+      }
+    },
+    {
+      "say": "तर हुआङलाई विदेशी गुप्तचरले निशाना बनाएको रिपोर्टको छानबिन जारी छ।",
+      "keyword": "छानबिन",
+      "visual": {
+        "type": "timeline",
+        "items": [
+          { "when": "रिपोर्ट", "what": "हुआङ निशानामा", "cue": "विदेशी" },
+          { "when": "२३ नोभेम्बर", "what": "पदमा फर्किए", "cue": "रिपोर्टको" },
+          { "when": "अहिले", "what": "स्वतन्त्र छानबिन", "live": true, "chip": "जारी", "cue": "छानबिन" }
+        ]
+      }
+    },
+    {
+      "say": "तपाईंलाई के लाग्छ? कमेन्टमा लेख्नुहोस्।",
+      "keyword": "कमेन्टमा",
+      "visual": { "type": "outro", "comment_keyword": "CEO" }
+    }
+  ]
+}

@@ -472,7 +472,7 @@ def render(root, config, approval=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Produce a reviewable vertical video from a JSON project.")
-    parser.add_argument("command", choices=("fetch", "generate", "narrate", "prepare", "render", "transcribe"))
+    parser.add_argument("command", choices=("fetch", "generate", "narrate", "prepare", "reel", "render", "transcribe"))
     parser.add_argument("project", help="Project JSON, or audio/video input for transcribe")
     parser.add_argument("--whisper", help="Path to whisper-cli executable (transcribe)")
     parser.add_argument("--model", help="Path to multilingual whisper.cpp model (transcribe)")
@@ -487,6 +487,9 @@ def main(argv=None):
             output = args.output or str(Path("transcripts") / (Path(args.project).stem + ".json"))
             transcribe(args.project, args.whisper, args.model, output, args.language)
             return 0
+        if args.command == "reel":
+            from .reel import reel
+            return reel(args.project, approval=args.approval)
         if args.command == "render" and args.approval != FINAL_EXPORT_APPROVAL:
             raise StudioError('Show a storyboard first; render only after approval with --approval "final export गर"')
         root, config = load_project(args.project)
