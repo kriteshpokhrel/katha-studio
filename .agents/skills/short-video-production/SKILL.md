@@ -11,16 +11,17 @@ The production agent does the research, writing, asset sourcing, editing and qua
 
 1. Define the topic, audience, platform, duration, and budget. Research and fact-check claims. Write an original script, not a close paraphrase of a book or reel. Avoid promising investment returns. Do not send private text to external providers without permission.
 2. Write the reel as a beat script, following `docs/reel-pipeline.md` and `examples/reel/jensen-huang.json`:
-   - one short spoken line per beat (10 words or fewer), with a keyword;
+   - one short authoritative caption per beat (10 words or fewer), with a keyword and optional per-word pronunciation overrides;
    - an animated component per beat (photo, card, swap, counter, stamp, checklist/list, timeline), cued to spoken words;
    - optional numbered steps;
    - a final outro that asks for a comment.
 
-   Use the configured brand kit (`brand/brand.json`; a proposal until approved). Avoid unrelated stock footage and copying a reference's artwork, wording or music.
+   Use the configured brand kit (`brand/brand.json`; Saffron Signal is the selected palette, while the name and mark remain provisional). Avoid unrelated stock footage and copying a reference's artwork, wording or music.
 3. Use only original or properly licensed photos, with a credit. Check attribution, reuse rights and likeness restrictions. A source reel is inspiration only. No AI-video model is bundled.
 4. Run `python -m katha reel <project.json>`. It does all of the following:
    - narrates with the configured edge-tts voice (default `ne-NP-SagarNeural`; script text goes to Microsoft's online service, so use only with permission);
-   - aligns words to beats;
+   - aligns provider timings to the written caption, failing rather than guessing on ambiguous alignment;
+   - writes a timed storyboard before the preview and rejects gaps over three seconds between planned story-content reveals, excluding the outro;
    - renders with HyperFrames;
    - mixes an original music bed and SFX with ducking and loudness normalisation;
    - writes QA results and a storyboard.
@@ -33,4 +34,4 @@ For footage-based scene videos, use the older `render`, `prepare`, `fetch`, `gen
 
 For optional raw-footage edits, transcription, cuts, punch-ins and badges still require editing outside the CLI. `transcribe` produces only an unverified draft; never use it as final captions, and never ask the user to repair it. For a before/after comparison, use real source and edited footage. Show the voiceover script first, then the storyboard, before the export gate. Neither face-touch detection nor ElevenLabs is integrated.
 
-Consult `docs/brand-and-production.md` for the proposed channel direction and production standards. Treat the brand name, logo, and styling as a proposal until approved. For commands, configuration details, dependencies, and limitations, see `docs/usage.md`.
+Consult `docs/brand-and-production.md` for the channel direction and production standards. Treat the name, logo, and handle as proposals until approved. For commands, configuration details, dependencies, and limitations, see `docs/usage.md`.

@@ -17,7 +17,8 @@ goal, not a software-enforced limit or a promise of provider pricing.
 The preferred format uses a consistent static branded canvas and animated
 story-specific components, a Nepali male voice, a kinetic headline caption with
 a highlighted keyword, and an original music bed with sound effects. It must
-remain configurable for others. The shipped `brand/brand.json` uses the
+remain configurable for others. The user selected the **Saffron Signal** palette;
+the shipped `brand/brand.json` uses the
 production name **Katha Studio** as a placeholder. The channel name
 **छेउबाट | Chheubata** is a separate, unapproved proposal; see
 [brand and production](brand-and-production.md). No name, handle or trademark
@@ -27,17 +28,17 @@ has been checked for availability.
 
 | Area | Implemented | Boundary |
 | --- | --- | --- |
-| Branded reels | `reel` command: beat script → edge-tts narration → word-aligned HyperFrames/GSAP composition (brand canvas, kinetic headline with keyword marker, cue-timed components, numbered steps, branded outro) → original procedural music and SFX, ducked and loudness-normalised → QA, storyboard and gated export. See [reel pipeline](reel-pipeline.md) | Agent writes the beat script; voice is synthetic; QA measures timing, loudness, motion and safe area, not facts or taste |
-| Brand kit | `brand/brand.json` colours, mark, handle, outro text; bundled OFL fonts | Identity is a proposal pending approval |
+| Branded reels | `reel` command: beat script → script-owned captions and optional pronunciation forms → timed storyboard and story-reveal pacing gate → HyperFrames/GSAP preview → sound mix → QA and gated export. See [reel pipeline](reel-pipeline.md) | Agent writes the beat script; voice is synthetic; timing and pixel checks cannot establish correctness, visual relevance or taste |
+| Brand kit | Selected Saffron Signal colours in `brand/brand.json`, configurable mark, handle and outro text; bundled OFL fonts | Name, mark and handle remain provisional |
 | Projects | JSON scenes; configurable dimensions, frame rate, fonts, text and visuals | The agent creates the script and scene plan; there is no topic-to-project generator |
 | Visual assets | Pexels photo/video downloads with provenance, local files, and an external generator command | Pexels requires a key; no AI-video provider, model or credentials are bundled; visual relevance and rights are not automatically verified |
 | Preparation | `prepare` prints a scene plan, acquires configured video assets, checks video streams and generates configured narration | It requires video scenes and cannot make the preferred static-background storyboard; partial runs can leave assets behind |
 | Narration | Optional online Nepali Microsoft Edge voices via `edge-tts`, with provider word boundaries | Script text is sent online; pronunciation is not guaranteed |
-| Captions | White text and yellow active word for generated narration, checked against the script and audio timing | Does not consume raw-speech transcripts; accurate glyph bounds, pronunciation and readability are not guaranteed |
+| Captions | Reel captions retain the written script and use validated provider timings; optional pronunciation mappings can differ. The older `render` command uses white/yellow timed captions | Does not consume raw-speech transcripts; pronunciation and readability are not guaranteed |
 | Video assembly | FFmpeg assembles images, colors or video, crops, adds captions and audio, and checks final streams and decoding | Basic cuts and looping, not a branded storyboard, motion graphics or music mixing |
 | HyperFrames | Generated per reel by the `reel` command; plus a separate four-second starter in `examples/hyperframes` | The older `render` command does not use HyperFrames |
 | Speech transcription | Local whisper.cpp command and multilingual models | Tested Nepali results contained serious errors; output is an unverified draft, not final captions |
-| Export | `render` and `reel` require the explicit `final export गर` approval string; `reel` also requires a passing, unchanged QA preview | This safeguard does not prove a human watched the preview; direct external tools cannot enforce it |
+| Export | `render` and `reel` require the explicit `final export गर` approval string; `reel` also requires a passing, unchanged QA preview whose SHA-256 matches | This safeguard does not prove a human watched the preview; direct external tools cannot enforce it |
 
 Earlier slideshow/animation experiments and the first Jensen Huang preview were
 rejected. They were replaced by the `reel` pipeline. Its sample,
@@ -47,10 +48,10 @@ synthetic voice has not been reviewed by a native listener.
 
 ## Pending work
 
-1. Approve or replace the proposed brand (name, mark, colours, handle) and check availability.
+1. Decide the channel name, mark and handle and check availability; the palette is selected.
 2. Build a research and original-script workflow that outputs a reel project: topic → sources and claim tracking → beat script. Today the agent writes the JSON by hand.
 3. Choose a more natural Nepali male voice provider, if budget allows. Keep edge-tts as the free default, and disclose synthetic speech.
-4. Add more component types (charts, maps, quote cards, image galleries). Support longer formats (about 2 minutes) with more steps, and tune the pacing.
+4. Add more component types (charts, maps, quote cards, image galleries) and validate the raised duration limit with a complete two-minute reel.
 5. Platform adaptations: cover image, titles and descriptions, and per-platform caption and safe-area variants. Scheduling and publishing are not implemented.
 6. Evaluate Nepali transcription for the optional raw-footage workflow. Mistake, face-touch and look-away detection, before/after reels and ElevenLabs are not implemented.
 7. Use vision-model QA to judge layout and visual relevance beyond the current pixel checks.

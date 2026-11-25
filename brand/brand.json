@@ -5,12 +5,12 @@
   "tagline": "हरेक खबर, एउटा छोटो कथा",
   "colors": {
     "paper": "#F2EEE6",
-    "dot": "#D9D3C7",
+    "dot": "#D6D0C3",
     "ink": "#151413",
-    "muted": "#7A756C",
-    "line": "#DDD7CB",
-    "card": "#FFFDF8",
-    "accent": "#FF4F1F",
+    "muted": "#706B62",
+    "line": "#D5CFC2",
+    "card": "#FFFCF6",
+    "accent": "#D83C10",
     "on_accent": "#FFFFFF"
   },
   "fonts": "fonts",

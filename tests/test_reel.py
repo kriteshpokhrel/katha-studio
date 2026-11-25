@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from katha import reel
 from katha.studio import FINAL_EXPORT_APPROVAL, StudioError
@@ -72,6 +73,92 @@ class ReelTests(unittest.TestCase):
         with self.assertRaisesRegex(StudioError, "extra words"):
             reel.align([{"say": "एक"}], words(("एक", 0.0), ("दुई", 0.4)))
 
+    def test_align_preserves_script_when_provider_splits_a_word(self):
+        beats = [{"say": "नमस्ते, साथी!"}]
+        spoken = words(("नम", 0.0), ("स्ते", 0.4), ("साथी", 0.8))
+        aligned = reel.align(beats, spoken)[0]
+        self.assertEqual([word["text"] for word in aligned], ["नमस्ते,", "साथी!"])
+        self.assertEqual((aligned[0]["start"], aligned[0]["end"]), (0.0, 0.7))
+
+    def test_align_keeps_display_text_with_multiword_pronunciation(self):
+        beats = [{"say": "NVIDIA 1993 मा", "pronunciations": {
+            "NVIDIA": "एनभिडिया", "1993": "उन्नाइस सय त्रियानब्बे"}}]
+        spoken = words(("एनभिडिया", 0.0), ("उन्नाइस", 0.4), ("सय", 0.8),
+                       ("त्रियानब्बे", 1.2), ("मा", 1.6))
+        aligned = reel.align(beats, spoken)[0]
+        self.assertEqual([word["text"] for word in aligned], ["NVIDIA", "1993", "मा"])
+        self.assertEqual((aligned[1]["start"], aligned[1]["end"]), (0.4, 1.5))
+        self.assertEqual(reel.keyword_span(aligned, "1993", 1), (1, 1))
+
+    def test_align_rejects_provider_token_crossing_display_words(self):
+        with self.assertRaisesRegex(StudioError, "beat 1 word"):
+            reel.align([{"say": "एक दुई"}], words(("एकदुई", 0.0)))
+
+    def test_align_rejects_invalid_or_unordered_timestamps(self):
+        beats = [{"say": "एक दुई"}]
+        with self.assertRaisesRegex(StudioError, "invalid"):
+            reel.align(beats, [{"text": "एक", "start": float("nan"), "end": 1.0}])
+        with self.assertRaisesRegex(StudioError, "ordered"):
+            reel.align(beats, words(("एक", 1.0), ("दुई", 0.0)))
+
+    def test_pronunciation_rejects_unknown_or_empty_replacement(self):
+        self.config["beats"][0]["pronunciations"] = {"missing": "शब्द"}
+        self.assert_invalid("does not match")
+        self.config["beats"][0]["pronunciations"] = {"पहिलो": " "}
+        self.assert_invalid("non-empty")
+
+    def test_narration_uses_pronunciation_overrides(self):
+        beats = [{"say": "NVIDIA फर्कियो", "pronunciations": {"NVIDIA": "एनभिडिया"}}]
+        config = {"beats": beats, "voice": {"name": "test", "rate": "+0%", "pitch": "+0Hz"}}
+        calls = []
+
+        async def fake_synthesize(text, voice, path, rate, pitch):
+            calls.append(text)
+            path.write_bytes(b"audio")
+            return words(("एनभिडिया", 0), ("फर्कियो", 1))
+
+        with patch("katha.speech.synthesize", fake_synthesize):
+            reel.narrate(config, self.root)
+        self.assertEqual(calls, ["एनभिडिया फर्कियो"])
+
+    def test_visual_pacing_counts_story_reveals_not_beat_motion(self):
+        times = [(0.0, 5.5), (5.5, 8.0), (8.0, 12.0)]
+        checks = reel.visual_pacing(times, [[0.0, 2.8], [5.5], [8.0]])
+        self.assertTrue(all(check["pass"] for check in checks))
+        checks = reel.visual_pacing(times, [[0.0], [5.5], [8.0]])
+        self.assertFalse(checks[0]["pass"])
+        self.assertEqual(checks[0]["value"], 5.5)
+
+    def test_card_cue_schedules_a_story_reveal(self):
+        brand = reel.load_brand(reel.REPO / "brand" / "brand.json")
+        beat = {"visual": {"type": "card", "title": "Context",
+                           "lines": [{"text": "Next fact", "cue": "दुई"}]}}
+        builder = reel.Beat(1, beat, words(("एक", 0.1), ("दुई", 2.5)), 0.0, 5.0, brand, {})
+        markup = builder.html()
+        self.assertIn("rise@2.500", markup)
+        self.assertEqual(builder.visual_events, [0.0, 2.5])
+        self.assertTrue(reel.visual_pacing([(0.0, 5.0), (5.0, 8.0)],
+                                           [builder.visual_events, [5.0]])[0]["pass"])
+
+    def test_visual_pacing_rejects_reveals_outside_beat(self):
+        with self.assertRaisesRegex(StudioError, "outside"):
+            reel.visual_pacing([(0.0, 3.0), (3.0, 6.0)], [[0.0, 3.0], [3.0]])
+
+    def test_pacing_failure_writes_plan_before_render(self):
+        path = self.write()
+        beat_words = [words(("पहिलो", 0.1)), words(("दोस्रो", 5.2)), words(("कमेन्ट", 7.7))]
+        times = [(0.0, 5.0), (5.0, 7.5), (7.5, 10.0)]
+        events = [[0.0], [5.0], [7.5]]
+        result = (self.root / "voice.mp3", sum(beat_words, []), beat_words, times, [], events)
+        with patch("katha.reel.build", return_value=result), patch("katha.reel.audio_duration", return_value=8), \
+                patch("katha.reel.render_video") as render:
+            with self.assertRaisesRegex(StudioError, "reveal gap"):
+                reel.reel(path)
+        render.assert_not_called()
+        plan = (self.root / "output" / "project-storyboard.md").read_text(encoding="utf-8")
+        self.assertIn("पहिलो कुरा यहाँ", plan)
+        self.assertIn("Reveals", plan)
+
     def test_timing_starts_at_zero_and_adds_tail(self):
         beat_words = [words(("a", 0.2)), words(("b", 1.5), ("c", 2.0))]
         self.assertEqual(reel.timing(beat_words, 2.0), [(0.0, 1.38), (1.38, 4.3)])
@@ -127,9 +214,24 @@ class ReelTests(unittest.TestCase):
         qa.write_text(json.dumps({"passed": False, "fingerprint": reel.project_fingerprint(path, config)}), encoding="utf-8")
         with self.assertRaisesRegex(StudioError, "failed quality"):
             reel.reel(path, approval=FINAL_EXPORT_APPROVAL)
-        qa.write_text(json.dumps({"passed": True, "fingerprint": reel.project_fingerprint(path, config)}), encoding="utf-8")
+        qa.write_text(json.dumps({"passed": True, "fingerprint": reel.project_fingerprint(path, config),
+                                  "preview_sha256": reel.preview_hash(output / "project.mp4")}), encoding="utf-8")
         self.assertEqual(reel.reel(path, approval=FINAL_EXPORT_APPROVAL), 0)
         self.assertEqual((self.root / "Exports" / "project.mp4").read_bytes(), b"video")
+        (output / "project.mp4").write_bytes(b"changed")
+        with self.assertRaisesRegex(StudioError, "Preview changed"):
+            reel.reel(path, approval=FINAL_EXPORT_APPROVAL)
+
+    def test_failed_rebuild_invalidates_previous_quality_report(self):
+        path = self.write()
+        output = self.root / "output"
+        output.mkdir()
+        qa = output / "project-qa.json"
+        qa.write_text("{}", encoding="utf-8")
+        with patch("katha.reel.build", side_effect=StudioError("build failed")):
+            with self.assertRaisesRegex(StudioError, "build failed"):
+                reel.reel(path)
+        self.assertFalse(qa.exists())
 
 
 if __name__ == "__main__":

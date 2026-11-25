@@ -24,9 +24,9 @@ VISUALS = ("photo", "card", "swap", "counter", "stamp", "checklist", "list", "ti
 TEXT_BOX = (65, 270, 916, 1250)
 COLOR_KEYS = ("paper", "dot", "ink", "muted", "line", "card", "accent", "on_accent")
 LIMITS = {
-    "duration": (20.0, 90.0), "words_per_second": (1.8, 3.4), "beat_seconds": (1.0, 6.0),
+    "duration": (20.0, 150.0), "words_per_second": (1.8, 3.4), "beat_seconds": (1.0, 6.0),
     "outro_seconds": (2.0, 9.0), "beat_words": 10, "lufs": (-15.5, -12.5), "true_peak": -1.0,
-    "moving_share": 0.35, "max_hold": 1.25,
+    "moving_share": 0.35, "max_hold": 1.25, "visual_gap": 3.0,
 }
 
 
@@ -76,8 +76,8 @@ def load_reel(path):
     if not isinstance(outro["tail"], (int, float)) or not 1 <= outro["tail"] <= 5:
         raise StudioError("outro.tail must be between 1 and 5 seconds")
     beats = config.get("beats")
-    if not isinstance(beats, list) or not 3 <= len(beats) <= 30:
-        raise StudioError("beats must be a list of 3-30 beats")
+    if not isinstance(beats, list) or not 3 <= len(beats) <= 75:
+        raise StudioError("beats must be a list of 3-75 beats")
     steps = []
     for i, beat in enumerate(beats, 1):
         label = f"Beat {i}"
@@ -85,6 +85,8 @@ def load_reel(path):
             raise StudioError(f"{label} must be an object")
         _text(beat.get("say"), f"{label} say")
         _text(beat.get("keyword"), f"{label} keyword")
+        parts = speech_parts(beat, i)
+        keyword_span([{"text": text} for text, _ in parts], beat["keyword"], i)
         if "step" in beat:
             if isinstance(beat["step"], bool) or not isinstance(beat["step"], int) or beat["step"] < 1:
                 raise StudioError(f"{label} step must be a positive integer")
@@ -148,20 +150,74 @@ def key(value):
     return spoken_text_key(value)
 
 
+def speech_parts(beat, index):
+    """Pair authoritative display tokens with optional pronunciation overrides."""
+    tokens = []
+    prefix = ""
+    for token in beat["say"].split():
+        if not key(token):
+            if tokens:
+                tokens[-1] += " " + token
+            else:
+                prefix += token + " "
+        else:
+            tokens.append(prefix + token)
+            prefix = ""
+    if not tokens:
+        raise StudioError(f"Beat {index} say must contain spoken words")
+    overrides = beat.get("pronunciations", {})
+    if not isinstance(overrides, dict):
+        raise StudioError(f"Beat {index} pronunciations must be an object")
+    normalized = {}
+    for display, spoken in overrides.items():
+        if not isinstance(display, str) or not key(display) or len(display.split()) != 1:
+            raise StudioError(f"Beat {index} pronunciation keys must be single display words")
+        normalized_key = key(display)
+        if normalized_key in normalized:
+            raise StudioError(f"Beat {index} has duplicate pronunciation keys")
+        spoken = _text(spoken, f"Beat {index} pronunciation for {display}")
+        if not key(spoken):
+            raise StudioError(f"Beat {index} pronunciation for {display} must contain spoken words")
+        normalized[normalized_key] = spoken
+    available = {key(token) for token in tokens}
+    unused = set(normalized) - available
+    if unused:
+        raise StudioError(f"Beat {index} pronunciation does not match a display word: {', '.join(sorted(unused))}")
+    return [(token, normalized.get(key(token), token)) for token in tokens]
+
+
 def align(beats, words):
-    """Split narration word boundaries into beats; return a list of word lists with display text."""
+    """Map provider boundaries to script tokens without substituting provider text."""
+    if not isinstance(words, list) or not words:
+        raise StudioError("Narration has no word timestamps")
+    for word in words:
+        if not isinstance(word, dict) or not isinstance(word.get("text"), str):
+            raise StudioError("Narration word timestamps are invalid")
+        start, end = word.get("start"), word.get("end")
+        if (isinstance(start, bool) or isinstance(end, bool)
+                or not isinstance(start, (int, float)) or not isinstance(end, (int, float))
+                or not math.isfinite(start) or not math.isfinite(end) or not 0 <= start < end):
+            raise StudioError("Narration word timestamps are invalid")
+    if any(words[i]["start"] >= words[i + 1]["start"] or words[i]["end"] > words[i + 1]["end"]
+           for i in range(len(words) - 1)):
+        raise StudioError("Narration word timestamps must be ordered")
     result, cursor = [], 0
     for i, beat in enumerate(beats, 1):
-        target, taken = key(beat["say"]), []
-        while cursor < len(words) and len("".join(key(w["text"]) for w in taken)) < len(target):
-            taken.append(words[cursor])
-            cursor += 1
-        if "".join(key(w["text"]) for w in taken) != target:
-            raise StudioError(f"Narration timing does not match beat {i}; simplify punctuation or numerals in its say text")
-        tokens = [t for t in beat["say"].split() if key(t)]
-        if len(tokens) == len(taken) and all(key(t) == key(w["text"]) for t, w in zip(tokens, taken)):
-            taken = [dict(w, text=t) for t, w in zip(tokens, taken)]
-        result.append(taken)
+        aligned = []
+        for display, spoken in speech_parts(beat, i):
+            target, matched, taken = key(spoken), "", []
+            while cursor < len(words) and len(matched) < len(target):
+                word = words[cursor]
+                matched += key(word["text"])
+                taken.append(word)
+                cursor += 1
+            if matched != target or not taken:
+                raise StudioError(
+                    f"Narration timing does not match beat {i} word '{display}'; "
+                    "adjust its pronunciation or script, then regenerate"
+                )
+            aligned.append({"text": display, "start": taken[0]["start"], "end": taken[-1]["end"]})
+        result.append(aligned)
     if cursor != len(words):
         raise StudioError("Narration returned extra words after the last beat")
     return result
@@ -209,6 +265,7 @@ class Beat:
     def __init__(self, index, beat, words, start, end, brand, assets):
         self.i, self.beat, self.words, self.s, self.e = index, beat, words, start, end
         self.brand, self.assets, self.sounds = brand, assets, []
+        self.visual_events = [start]
         self.first = index == 1
 
     def enter(self, preset, at, sound=None):
@@ -237,6 +294,7 @@ class Beat:
         stamp = ""
         if v.get("stamp"):
             at = cue_time(self.words, v["stamp_cue"], self.i) if v.get("stamp_cue") else t + 0.6
+            self.visual_events.append(at)
             self.sounds.append((round(at, 3), "stamp"))
             stamp = f'<div class="stamp" data-anim="{anim(f"stamp@{at:.3f}")}">{escape(v["stamp"])}</div>'
         credit = f'<div class="credit mono">{escape(v["credit"])}</div>' if v.get("credit") else ""
@@ -249,6 +307,7 @@ class Beat:
         times = self.slots(lines, t + 0.5)
         rows = []
         for line, at in zip(lines, times):
+            self.visual_events.append(at)
             self.sounds.append((round(at, 3), "tick"))
             tag = f'<span class="tag mono">{escape(line["tag"])}</span>' if line.get("tag") else ""
             rows.append(f'<div class="line" data-anim="{anim(f"rise@{at:.3f}")}">{tag}{escape(line["text"])}</div>')
@@ -278,6 +337,7 @@ class Beat:
 
     def v_swap(self, v, t):
         second = cue_time(self.words, v["cue"], self.i) if v.get("cue") else t + max(0.6, (self.e - t) * 0.4)
+        self.visual_events.append(second)
         self.sounds.append((round(second - 0.25, 3), "tick"))
         arrow = f'<div class="arrow" data-anim="{anim(f"drawy@{second - 0.25:.3f}:0.3")}"></div>'
         return self.person(v["from"], t) + arrow + self.person(v["to"], second, second + 0.35)
@@ -291,6 +351,7 @@ class Beat:
 
     def v_stamp(self, v, t):
         at = cue_time(self.words, v["cue"], self.i) if v.get("cue") else t + 0.5
+        self.visual_events.append(at)
         self.sounds.append((round(at, 3), "stamp"))
         title = f'<div class="title" style="text-align:center">{escape(v["title"])}</div>' if v.get("title") else ""
         eyebrow = f'<div class="eyebrow mono">{escape(v["eyebrow"])}</div>' if v.get("eyebrow") else ""
@@ -301,6 +362,7 @@ class Beat:
         items = _items(v, "checklist")
         rows = []
         for item, at in zip(items, self.slots(items, t + 0.25)):
+            self.visual_events.append(at)
             self.sounds.append((round(at + 0.15, 3), "tick"))
             rows.append(f'<div class="row" data-anim="{anim(f"rise@{at:.3f}")}"><div class="box">'
                         f'<i data-anim="{anim(f"tick@{at + 0.15:.3f}")}">✓</i></div>'
@@ -311,6 +373,7 @@ class Beat:
         items = _items(v, "list")
         rows = []
         for n, (item, at) in enumerate(zip(items, self.slots(items, t + 0.25)), 1):
+            self.visual_events.append(at)
             self.sounds.append((round(at, 3), "pop"))
             rows.append(f'<div class="row" data-anim="{anim(f"rise@{at:.3f}")}"><div class="idx serif">{n}</div>'
                         f'<div class="text">{escape(item["text"])}</div></div>')
@@ -320,6 +383,7 @@ class Beat:
         items = _items(v, "timeline", 2, 4)
         nodes = []
         for item, at in zip(items, self.slots(items, t + 0.35)):
+            self.visual_events.append(at)
             self.sounds.append((round(at, 3), "tick"))
             chip = f'<span class="chip mono">{escape(item["chip"])}</span>' if item.get("chip") else ""
             nodes.append(f'<div class="node{" live" if item.get("live") else ""}" data-anim="{anim(f"rise@{at:.3f}")}">'
@@ -406,12 +470,13 @@ def header(config, times, duration):
 def composition(config, beat_words, times, assets):
     brand = config["_brand"]
     duration = times[-1][1]
-    clips, sounds = [], []
+    clips, sounds, visual_events = [], [], []
     for index, (beat, words, (s, e)) in enumerate(zip(config["beats"], beat_words, times), 1):
         last = index == len(times)
         builder = Beat(index, beat, words, s, e, brand, assets)
         stage = builder.html()
         sounds += builder.sounds
+        visual_events.append(builder.visual_events)
         if index > 1:
             sounds.append((round(max(0, s - 0.1), 3), "whoosh"))
         exit_ = "" if last else f"out@{e - 0.2:.3f}"
@@ -431,7 +496,7 @@ def composition(config, beat_words, times, assets):
 <script src="assets/gsap.min.js"></script><script src="assets/reel.js"></script>
 </body></html>
 """
-    return page, sounds
+    return page, sounds, visual_events
 
 
 def file_hash(*parts):
@@ -444,7 +509,8 @@ def file_hash(*parts):
 def narrate(config, cache):
     from .speech import synthesize
     voice = config["voice"]
-    script = " ".join(beat["say"].strip() for beat in config["beats"])
+    script = " ".join(spoken for index, beat in enumerate(config["beats"], 1)
+                      for _, spoken in speech_parts(beat, index))
     stem = "voice-" + file_hash(script, voice["name"], voice["rate"], voice["pitch"])
     audio, words_path = cache / f"{stem}.mp3", cache / f"{stem}.json"
     if not (audio.is_file() and words_path.is_file()):
@@ -495,9 +561,24 @@ def build(project_path, config, work_dir):
     beat_words = align(config["beats"], words)
     times = timing(beat_words, config["outro"]["tail"])
     images = collect_images(config, project_path.parent, cache, assets_dir)
-    page, sounds = composition(config, beat_words, times, images)
+    page, sounds, visual_events = composition(config, beat_words, times, images)
     (build_dir / "index.html").write_text(page, encoding="utf-8")
-    return voice, words, beat_words, times, sounds
+    return voice, words, beat_words, times, sounds, visual_events
+
+
+def visual_pacing(times, visual_events):
+    """Measure gaps between planned story-content reveals, excluding the closing outro."""
+    if len(times) != len(visual_events):
+        raise StudioError("Visual pacing plan does not match the beat timeline")
+    checks = []
+    for index, ((start, end), events) in enumerate(zip(times[:-1], visual_events[:-1]), 1):
+        if not events or any(not math.isfinite(at) or at < start or at >= end for at in events):
+            raise StudioError(f"Beat {index} has a visual reveal outside its time window")
+        boundaries = sorted(set([start, end] + events))
+        gap = round(max(b - a for a, b in zip(boundaries, boundaries[1:])), 3)
+        checks.append({"check": f"beat_{index}_visual_gap_seconds", "value": gap,
+                       "limit": f"<= {LIMITS['visual_gap']}", "pass": gap <= LIMITS["visual_gap"]})
+    return checks
 
 
 def hyperframes():
@@ -604,10 +685,10 @@ def hex_rgb(value):
     return tuple(int(value[i:i + 2], 16) for i in (1, 3, 5))
 
 
-def quality(video, config, words, beat_words, times):
+def quality(video, config, words, beat_words, times, visual_events):
     duration = times[-1][1]
     spoken = words[-1]["end"] - words[0]["start"]
-    checks = []
+    checks = visual_pacing(times, visual_events)
 
     def check(name, value, ok, limit):
         checks.append({"check": name, "value": value, "limit": limit, "pass": bool(ok)})
@@ -637,7 +718,7 @@ def quality(video, config, words, beat_words, times):
     return {"passed": all(c["pass"] for c in checks), "mean_frame_change": motion["mean_change"], "checks": checks}
 
 
-def storyboard(video, config, times, beat_words, image, markdown):
+def storyboard_image(video, times, image):
     with tempfile.TemporaryDirectory(prefix="katha-board-") as temp:
         for n, (s, e) in enumerate(times, 1):
             execute([tool("ffmpeg"), "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{min(e - 0.3, s + (e - s) * 0.7):.3f}",
@@ -646,9 +727,18 @@ def storyboard(video, config, times, beat_words, image, markdown):
         rows = math.ceil(len(times) / columns)
         execute([tool("ffmpeg"), "-hide_banner", "-loglevel", "error", "-y", "-framerate", "1", "-i", str(Path(temp) / "f%03d.png"),
                  "-vf", f"tile={columns}x{rows}:padding=8:margin=8:color=white", "-frames:v", "1", str(image)])
-    lines = [f"# Storyboard: {config['title']}", "", "| # | Time | Visual | Keyword | Spoken line |", "|---|---|---|---|---|"]
-    for n, (beat, (s, e)) in enumerate(zip(config["beats"], times), 1):
-        lines.append(f"| {n} | {s:.1f}-{e:.1f}s | {beat['visual']['type']} | {beat['keyword']} | {beat['say']} |")
+def storyboard_plan(config, times, visual_events, markdown):
+    def cell(value):
+        return str(value).replace("|", r"\|").replace("\n", " ")
+
+    lines = [f"# Storyboard: {config['title']}", "",
+             "| # | Time | Visual | Reveals (s) | Keyword | Caption | Pronunciation |",
+             "|---|---|---|---|---|---|---|"]
+    for n, (beat, (s, e), events) in enumerate(zip(config["beats"], times, visual_events), 1):
+        reveals = ", ".join(f"{at:.1f}" for at in sorted(set(events)))
+        spoken = " ".join(spoken for _, spoken in speech_parts(beat, n))
+        lines.append(f"| {n} | {s:.1f}-{e:.1f}s | {cell(beat['visual']['type'])} | {reveals} | "
+                     f"{cell(beat['keyword'])} | {cell(beat['say'])} | {cell(spoken)} |")
     sources = config.get("sources", [])
     if sources:
         lines += ["", "## Sources"] + [f"- {source}" for source in sources]
@@ -660,9 +750,18 @@ def storyboard(video, config, times, beat_words, image, markdown):
 
 def project_fingerprint(path, config):
     brand_file = json.dumps({k: v for k, v in config["_brand"].items() if not k.startswith("_")}, sort_keys=True, ensure_ascii=False)
-    code = [Path(__file__).read_bytes(), (Path(__file__).parent / "sound.py").read_bytes(),
+    code = [Path(__file__).read_bytes(), (Path(__file__).parent / "speech.py").read_bytes(),
+            (Path(__file__).parent / "sound.py").read_bytes(),
             (ASSETS / "reel.js").read_bytes(), (ASSETS / "reel.css").read_bytes()]
     return file_hash(Path(path).read_bytes(), brand_file, *code)
+
+
+def preview_hash(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def reel(project, approval=None):
@@ -682,6 +781,8 @@ def reel(project, approval=None):
             raise StudioError("Project changed since the preview; render and review it again before export")
         if not qa.get("passed"):
             raise StudioError("Preview failed quality checks; fix them before export")
+        if qa.get("preview_sha256") != preview_hash(preview):
+            raise StudioError("Preview changed since the quality checks; render and review it again before export")
         exports = root / "Exports"
         exports.mkdir(exist_ok=True)
         shutil.copyfile(preview, exports / f"{stem}.mp4")
@@ -691,11 +792,23 @@ def reel(project, approval=None):
     build_dir = root / ".katha" / stem
     build_dir.mkdir(parents=True, exist_ok=True)
     out_dir.mkdir(exist_ok=True)
+    qa_path.unlink(missing_ok=True)
     print("Building composition and narration...")
-    voice, words, beat_words, times, sounds = build(path, config, build_dir)
+    voice, words, beat_words, times, sounds, visual_events = build(path, config, build_dir)
     duration = times[-1][1]
-    if audio_duration(voice) > duration:
+    voice_duration = audio_duration(voice)
+    if words[-1]["end"] > voice_duration + 0.1:
+        raise StudioError("Narration word timestamps exceed audio duration")
+    if voice_duration > duration:
         raise StudioError("Narration is longer than the composition")
+    plan_path = out_dir / f"{stem}-storyboard.md"
+    storyboard_plan(config, times, visual_events, plan_path)
+    print(f"Storyboard plan: {plan_path}")
+    pacing = visual_pacing(times, visual_events)
+    failed_pacing = [c for c in pacing if not c["pass"]]
+    if failed_pacing:
+        detail = ", ".join(f"{c['check']}: {c['value']}s" for c in failed_pacing)
+        raise StudioError(f"Story-content reveal gap exceeds {LIMITS['visual_gap']}s: {detail}; split or add cued content")
     print(f"Rendering {duration:.1f}s with HyperFrames...")
     silent = build_dir / "silent.mp4"
     render_video(build_dir / "composition", silent)
@@ -704,10 +817,11 @@ def reel(project, approval=None):
     sound.write_wav(build_dir / "sfx.wav", sound.sfx_track(duration, sounds))
     mix(silent, voice, build_dir / "music.wav", build_dir / "sfx.wav", music["volume"], duration, preview)
     print("Running quality checks...")
-    qa = quality(preview, config, words, beat_words, times)
+    qa = quality(preview, config, words, beat_words, times, visual_events)
     qa["fingerprint"] = fingerprint
+    qa["preview_sha256"] = preview_hash(preview)
     qa_path.write_text(json.dumps(qa, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    storyboard(preview, config, times, beat_words, out_dir / f"{stem}-storyboard.jpg", out_dir / f"{stem}-storyboard.md")
+    storyboard_image(preview, times, out_dir / f"{stem}-storyboard.jpg")
     failed = [c for c in qa["checks"] if not c["pass"]]
     for c in failed:
         print(f"QA FAIL {c['check']}: {c['value']} (limit {c['limit']})")
