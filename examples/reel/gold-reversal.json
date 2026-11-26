@@ -1,0 +1,293 @@
+{
+  "title": "दुई दिनको उकालो, एक दिनमै उल्टियो",
+  "topic": "सुनको भाउ · २५ नोभेम्बर २०२६",
+  "profile": "visual_storytelling",
+  "story": {
+    "audience": "Nepali viewers following gold prices, especially household jewellery buyers",
+    "takeaway": "A short rise can reverse; the dated quoted gold rate is not a jewellery bill or a forecast.",
+    "target_seconds": 50,
+    "hooks": [
+      "सुनको दुई दिनको वृद्धि, एकै दिनमै मेटियो!",
+      "सुन घट्यो, तर गहनाको बिल नि?",
+      "सुनको भाउ बढ्दैमा जोखिम सकिन्छ?"
+    ],
+    "selected_hook": 0,
+    "sections": [
+      {"role": "hook", "text": "सुनको दुई दिनको वृद्धि, एकै दिनमै मेटियो!"},
+      {"role": "context", "text": "नेपालमा तेइस र चौबीस नोभेम्बरमा भाउ बढ्दा, तोलामा जम्मा पाँच हजार तीन सय रुपैयाँ थपिएको थियो।"},
+      {"role": "explanation", "text": "तर पच्चीस नोभेम्बरमा छ हजार पाँच सय रुपैयाँ घटेपछि, दर दुई लाख एकचालीस हजार चार सयमा झर्‍यो। अर्थात्, त्यो वृद्धि मेटिएर भाउ अझ बाह्र सय तल पुग्यो।"},
+      {"role": "impact", "text": "तर यो सूचीकृत दर भएकाले, यसैलाई गहनाको बिल नसम्झनुहोस्। किनकि बिलमा सुनको मूल्यसँगै ज्याला र अरू शुल्क जोडिन सक्छन्। बिहेको गहना किन्न बाँकी भएकालाई यो राहत हुन सक्छ, तर पहिल्यै किनिसकेको व्यक्तिलाई चाहिँ यही गिरावटले चिन्ता दिन सक्छ।"},
+      {"role": "caveat", "text": "यसले सम्झाउँछ—सुरक्षित लगानी भनिए पनि सुनको भाउ घट्न सक्छ, र दुई दिन बढ्दैमा गिरावट सकियो भन्न मिल्दैन।"},
+      {"role": "cta", "text": "तपाईं सुन गहनाका लागि किन्नुहुन्छ, कि बचतका लागि?"}
+    ]
+  },
+  "voice": {"provider": "edge", "name": "ne-NP-SagarNeural", "rate": "+8%", "pitch": "-2Hz"},
+  "music": {"seed": 12, "bpm": 78, "volume": 0.2, "duck_ratio": 2},
+  "sfx": {"volume": 0.15},
+  "outro": {"tail": 2.4},
+  "sources": [
+    "Rates checked 2026-11-25. Onlinekhabar reports the Federation of Nepal Gold and Silver Dealers' Association's quoted Nepal gold rates; the federation's live website did not expose a directly readable rate in this research environment. Do not describe this as an independently retrieved federation price series.",
+    "2026-11-22: Rs 242,600 per tola. https://english.onlinekhabar.com/gold-price-falls-rs-2800-per-tola.html",
+    "2026-11-23: Rs 247,400; 2026-11-24: Rs 247,900. The two-day rise was Rs 5,300. https://english.onlinekhabar.com/gold-price-rises-6.html",
+    "2026-11-25: Rs 241,400 per tola, down Rs 6,500 from Rs 247,900. https://english.onlinekhabar.com/gold-price-drops-by-rs-6500.html",
+    "Derived arithmetic: 247900 - 242600 = 5300; 247900 - 241400 = 6500; 6500 - 5300 = 1200. Distinguish the two-day rise from the latest one-day fall.",
+    "All artwork is original vector illustration. Chart plots the four reported daily quotations, not intraday prices. Y-axis is explicitly truncated to Rs 240,000-250,000; connecting segments are guides between reported daily points.",
+    "Jewellery bill, wedding buyer, prior buyer, wallet and shield are conceptual illustrations, not reporting on identifiable people, actual shop invoices, guaranteed resale prices or investment returns. Making/other charges depend on the transaction; no amount, tax rate or deduction is asserted.",
+    "The reel explains a dated reversal, not its unverified causes or a future price forecast. No buy/sell recommendation. Synthetic Nepali narration; no cloned voice. Original procedural music and two explicitly cued soft effects."
+  ],
+  "scenes": {
+    "hook": {
+      "description": "A substantial original gold ingot rises and then drops past its starting level; the motion is illustrative, not a price chart.",
+      "objects": [
+        {"id": "up-route", "type": "path", "draw": 0, "attrs": {"d": "M 90 355 L 90 100 L 65 130 M 90 100 L 115 130", "fill": "none", "stroke": "ink", "stroke-width": 8}},
+        {"id": "down-route", "type": "path", "draw": 0, "attrs": {"d": "M 665 100 L 665 390 L 640 360 M 665 390 L 690 360", "fill": "none", "stroke": "accent", "stroke-width": 10}},
+        {"id": "ingot", "type": "group", "x": 254, "y": 280, "children": [
+          {"id": "top", "type": "path", "attrs": {"d": "M 0 0 L 260 0 L 300 65 L -40 65 Z", "fill": "#E6BD55", "stroke": "ink", "stroke-width": 4}},
+          {"id": "front", "type": "path", "attrs": {"d": "M -40 65 L 300 65 L 280 150 L -20 150 Z", "fill": "#C79A30", "stroke": "ink", "stroke-width": 4}},
+          {"id": "glint", "type": "line", "attrs": {"x1": 24, "y1": 20, "x2": 228, "y2": 20, "stroke": "card", "stroke-width": 5}},
+          {"id": "engraving", "type": "text", "x": 130, "y": 124, "text": "Au", "attrs": {"font-size": 54, "text-anchor": "middle", "fill": "ink"}}
+        ]},
+        {"id": "rise", "type": "text", "x": 384, "y": 70, "text": "दुई दिनको वृद्धि", "attrs": {"font-size": 36, "text-anchor": "middle", "fill": "ink"}},
+        {"id": "fall", "type": "text", "x": 384, "y": 70, "opacity": 0, "text": "एक दिनको गिरावट", "attrs": {"font-size": 36, "text-anchor": "middle", "fill": "accent"}},
+        {"id": "note", "type": "text", "x": 384, "y": 520, "text": "सांकेतिक गति · वास्तविक दर अब हेरौँ", "attrs": {"font-size": 26, "text-anchor": "middle", "fill": "muted"}}
+      ]
+    },
+    "market": {
+      "description": "A dated four-point chart of reported gold quotations, with a visibly labelled truncated axis and a comparison of the two-day rise and one-day fall.",
+      "objects": [
+        {"id": "chart", "type": "group", "children": [
+          {"id": "axis", "type": "path", "attrs": {"d": "M 106 120 L 106 360 L 710 360", "fill": "none", "stroke": "ink", "stroke-width": 3}},
+          {"id": "top-guide", "type": "line", "attrs": {"x1": 106, "y1": 120, "x2": 710, "y2": 120, "stroke": "line", "stroke-width": 2}},
+          {"id": "top-value", "type": "text", "x": 96, "y": 130, "text": "२.५०", "attrs": {"font-size": 25, "text-anchor": "end", "fill": "muted"}},
+          {"id": "low-value", "type": "text", "x": 96, "y": 365, "text": "२.४०", "attrs": {"font-size": 25, "text-anchor": "end", "fill": "muted"}},
+          {"id": "unit", "type": "text", "x": 106, "y": 100, "text": "लाख रुपैयाँ / तोला", "attrs": {"font-size": 24, "fill": "muted"}},
+          {"id": "rising-line", "type": "path", "draw": 0, "attrs": {"d": "M 150 297.6 L 330 182.4 L 510 170.4", "fill": "none", "stroke": "ink", "stroke-width": 9}},
+          {"id": "falling-line", "type": "path", "draw": 0, "attrs": {"d": "M 510 170.4 L 690 326.4", "fill": "none", "stroke": "accent", "stroke-width": 10}},
+          {"id": "point", "type": "circle", "x": 150, "y": 297.6, "attrs": {"r": 30, "fill": "#E6BD55", "stroke": "ink", "stroke-width": 4}},
+          {"id": "date-a", "type": "text", "x": 150, "y": 401, "text": "२२", "attrs": {"font-size": 31, "text-anchor": "middle", "fill": "ink"}},
+          {"id": "date-b", "type": "text", "x": 330, "y": 401, "text": "२३", "attrs": {"font-size": 31, "text-anchor": "middle", "fill": "ink"}},
+          {"id": "date-c", "type": "text", "x": 510, "y": 401, "text": "२४", "attrs": {"font-size": 31, "text-anchor": "middle", "fill": "ink"}},
+          {"id": "date-d", "type": "text", "x": 690, "y": 401, "text": "२५", "attrs": {"font-size": 31, "text-anchor": "middle", "fill": "accent"}},
+          {"id": "month", "type": "text", "x": 430, "y": 438, "text": "नोभेम्बर २०२६", "attrs": {"font-size": 26, "text-anchor": "middle", "fill": "muted"}}
+        ]},
+        {"id": "old-price", "type": "text", "x": 500, "y": 62, "opacity": 0, "text": "रु २,४७,९००", "attrs": {"font-size": 46, "text-anchor": "middle", "fill": "ink"}},
+        {"id": "new-price", "type": "text", "x": 500, "y": 62, "opacity": 0, "text": "रु २,४१,४००", "attrs": {"font-size": 46, "text-anchor": "middle", "fill": "accent"}},
+        {"id": "gain-amount", "type": "text", "x": 384, "y": 490, "opacity": 0, "text": "+ ५,३००", "attrs": {"font-size": 42, "text-anchor": "middle", "fill": "ink"}},
+        {"id": "fall-amount", "type": "text", "x": 384, "y": 490, "opacity": 0, "text": "− ६,५००", "attrs": {"font-size": 42, "text-anchor": "middle", "fill": "accent"}},
+        {"id": "comparison", "type": "group", "x": 110, "y": 115, "opacity": 0, "children": [
+          {"id": "gain-block", "type": "rect", "x": 90, "y": 0, "attrs": {"width": 280, "height": 106, "fill": "#E6BD55", "stroke": "ink", "stroke-width": 3}},
+          {"id": "gain-number", "type": "text", "x": 230, "y": 68, "text": "+ ५,३००", "attrs": {"font-size": 42, "text-anchor": "middle", "fill": "ink"}},
+          {"id": "loss-block", "type": "rect", "x": 90, "y": 155, "attrs": {"width": 280, "height": 106, "fill": "accent"}},
+          {"id": "loss-number", "type": "text", "x": 230, "y": 223, "text": "− ५,३००", "attrs": {"font-size": 42, "text-anchor": "middle", "fill": "on_accent"}},
+          {"id": "extra-block", "type": "rect", "x": 370, "y": 155, "attrs": {"width": 64, "height": 106, "fill": "ink"}},
+          {"id": "extra-label", "type": "text", "x": 402, "y": 315, "text": "थप −१,२००", "attrs": {"font-size": 36, "text-anchor": "middle", "fill": "accent"}}
+        ]},
+        {"id": "axis-note", "type": "text", "x": 384, "y": 538, "text": "अक्ष शून्यबाट होइन · दैनिक सूचीकृत दर · स्रोत: अनलाइनखबर", "attrs": {"font-size": 22, "text-anchor": "middle", "fill": "muted"}}
+      ]
+    },
+    "receipt": {
+      "description": "An original jewellery necklace and illustrated invoice separate a published metal quotation from a jewellery bill and an unknown resale offer.",
+      "objects": [
+        {"id": "necklace", "type": "group", "x": 54, "y": 95, "children": [
+          {"id": "chain", "type": "path", "attrs": {"d": "M 30 0 C 10 270 270 270 250 0", "fill": "none", "stroke": "#C79A30", "stroke-width": 18}},
+          {"id": "chain-highlight", "type": "path", "attrs": {"d": "M 30 0 C 10 270 270 270 250 0", "fill": "none", "stroke": "#E6BD55", "stroke-width": 7}},
+          {"id": "pendant", "type": "path", "attrs": {"d": "M 140 205 L 186 260 L 140 315 L 94 260 Z", "fill": "#E6BD55", "stroke": "ink", "stroke-width": 4}},
+          {"id": "pendant-inner", "type": "circle", "x": 140, "y": 260, "attrs": {"r": 15, "fill": "accent"}}
+        ]},
+        {"id": "invoice", "type": "group", "x": 402, "y": 70, "children": [
+          {"id": "paper", "type": "path", "attrs": {"d": "M 0 0 L 290 0 L 290 360 L 261 342 L 232 360 L 203 342 L 174 360 L 145 342 L 116 360 L 87 342 L 58 360 L 29 342 L 0 360 Z", "fill": "card", "stroke": "ink", "stroke-width": 4}},
+          {"id": "heading", "type": "text", "x": 145, "y": 57, "text": "गहनाको बिल", "attrs": {"font-size": 35, "text-anchor": "middle", "fill": "ink"}},
+          {"id": "rule", "type": "line", "attrs": {"x1": 24, "y1": 80, "x2": 266, "y2": 80, "stroke": "line", "stroke-width": 3}},
+          {"id": "metal", "type": "text", "x": 30, "y": 137, "text": "सुनको मूल्य", "attrs": {"font-size": 33, "fill": "ink"}},
+          {"id": "making", "type": "group", "opacity": 0, "children": [
+            {"id": "making-box", "type": "rect", "x": 16, "y": 180, "attrs": {"width": 258, "height": 64, "rx": 8, "fill": "#E6BD55"}},
+            {"id": "making-text", "type": "text", "x": 30, "y": 223, "text": "+ ज्याला / शुल्क", "attrs": {"font-size": 32, "fill": "ink"}}
+          ]},
+          {"id": "unknown", "type": "text", "x": 145, "y": 285, "text": "सूचीकृत दर ≠ बिल", "attrs": {"font-size": 29, "text-anchor": "middle", "fill": "accent"}}
+        ]},
+        {"id": "note", "type": "text", "x": 384, "y": 520, "text": "सांकेतिक बिल · वास्तविक शुल्क र बिक्री सर्त फरक हुन्छन्", "attrs": {"font-size": 25, "text-anchor": "middle", "fill": "muted"}}
+      ]
+    },
+    "people": {
+      "description": "Two fictional shoppers respond differently to the same fall: an upcoming wedding purchase and a prior gold purchase. Neither is a prediction or a claim of a realised loss.",
+      "objects": [
+        {"id": "divider", "type": "line", "attrs": {"x1": 384, "y1": 95, "x2": 384, "y2": 420, "stroke": "line", "stroke-width": 3}},
+        {"id": "bride", "type": "group", "x": 190, "y": 275, "children": [
+          {"id": "veil", "type": "path", "attrs": {"d": "M -100 82 L -78 -125 Q 0 -190 78 -125 L 100 82 Z", "fill": "accent", "stroke": "ink", "stroke-width": 4}},
+          {"id": "face", "type": "circle", "y": -75, "attrs": {"r": 48, "fill": "paper", "stroke": "ink", "stroke-width": 4}},
+          {"id": "bindi", "type": "circle", "y": -94, "attrs": {"r": 5, "fill": "accent"}},
+          {"id": "smile", "type": "path", "attrs": {"d": "M -17 -56 Q 0 -43 17 -56", "stroke": "ink", "stroke-width": 3, "fill": "none"}},
+          {"id": "necklace", "type": "path", "attrs": {"d": "M -42 -2 Q 0 83 42 -2 M -32 12 Q 0 96 32 12", "stroke": "#E6BD55", "stroke-width": 9, "fill": "none"}},
+          {"id": "bride-label", "type": "text", "x": 0, "y": 138, "text": "किन्न बाँकी", "attrs": {"font-size": 36, "text-anchor": "middle", "fill": "ink"}}
+        ]},
+        {"id": "buyer", "type": "group", "x": 580, "y": 310, "opacity": 0.22, "children": [
+          {"id": "body", "type": "path", "attrs": {"d": "M -90 50 L -72 -32 Q 0 -70 72 -32 L 90 50 Z", "fill": "card", "stroke": "ink", "stroke-width": 4}},
+          {"id": "head", "type": "circle", "y": -105, "attrs": {"r": 48, "fill": "paper", "stroke": "ink", "stroke-width": 4}},
+          {"id": "brow-left", "type": "line", "attrs": {"x1": 0, "y1": 0, "x2": 20, "y2": 8, "stroke": "ink", "stroke-width": 4}, "x": -26, "y": -116},
+          {"id": "brow-right", "type": "line", "attrs": {"x1": 0, "y1": 8, "x2": 20, "y2": 0, "stroke": "ink", "stroke-width": 4}, "x": 6, "y": -116},
+          {"id": "holding", "type": "rect", "x": -38, "y": -20, "attrs": {"width": 76, "height": 48, "rx": 6, "fill": "#E6BD55", "stroke": "ink", "stroke-width": 3}},
+          {"id": "buyer-label", "type": "text", "x": 0, "y": 103, "text": "पहिल्यै किनेको", "attrs": {"font-size": 36, "text-anchor": "middle", "fill": "ink"}}
+        ]},
+        {"id": "price-arrow", "type": "group", "x": 292, "y": 56, "children": [
+          {"id": "shaft", "type": "path", "attrs": {"d": "M 0 0 L 125 0 L 125 57 L 155 57 L 92 116 L 30 57 L 62 57 L 62 32 L 0 32 Z", "fill": "accent"}},
+          {"id": "amount", "type": "text", "x": 92, "y": -18, "text": "एउटै गिरावट", "attrs": {"font-size": 32, "text-anchor": "middle", "fill": "accent"}}
+        ]},
+        {"id": "note", "type": "text", "x": 384, "y": 520, "text": "सांकेतिक पात्र · चिन्ता हुनु र घाटा बेचेर स्वीकार्नु फरक हो", "attrs": {"font-size": 24, "text-anchor": "middle", "fill": "muted"}}
+      ]
+    },
+    "risk": {
+      "description": "An original shield contains a changing gold-price line; the shield does not prevent a downward move, and an unresolved ending avoids forecasting future prices.",
+      "objects": [
+        {"id": "shield", "type": "group", "x": 384, "y": 60, "scale": 0.84, "children": [
+          {"id": "outline", "type": "path", "attrs": {"d": "M 0 0 L 200 72 L 182 285 Q 120 400 0 450 Q -120 400 -182 285 L -200 72 Z", "fill": "card", "stroke": "ink", "stroke-width": 6}},
+          {"id": "price-line", "type": "path", "draw": 0, "attrs": {"d": "M -138 268 L -70 200 L -18 220 L 45 150 L 132 295", "fill": "none", "stroke": "accent", "stroke-width": 11}},
+          {"id": "gold", "type": "path", "attrs": {"d": "M -40 60 L 40 60 L 60 108 L -60 108 Z", "fill": "#E6BD55", "stroke": "ink", "stroke-width": 3}},
+          {"id": "unknown", "type": "text", "x": 104, "y": 355, "opacity": 0, "text": "?", "attrs": {"font-size": 75, "text-anchor": "middle", "fill": "ink"}}
+        ]},
+        {"id": "note", "type": "text", "x": 384, "y": 520, "text": "मूल्यको उतारचढावबारे · खरिद वा बिक्रीको सिफारिस होइन", "attrs": {"font-size": 25, "text-anchor": "middle", "fill": "muted"}}
+      ]
+    }
+  },
+  "beats": [
+    {
+      "say": "सुनको दुई दिनको वृद्धि,",
+      "keyword": "वृद्धि",
+      "visual": {"type": "scene", "scene": "hook", "purpose": "Open on a rising gold object, not a headline card.",
+        "actions": [
+          {"target": "ingot", "duration": 1.3, "to": {"y": 108}, "meaning": "Lift the same ingot to establish the two-day rise."},
+          {"target": "up-route", "duration": 1.3, "to": {"draw": 1}, "meaning": "Trace the direction of the illustrative rise."}
+        ]}
+    },
+    {
+      "say": "एकै दिनमै मेटियो!",
+      "keyword": "मेटियो",
+      "visual": {"type": "scene", "scene": "hook", "purpose": "Reverse the same physical object to deliver the hook.",
+        "actions": [
+          {"target": "ingot", "duration": 1.75, "to": {"y": 322}, "meaning": "Drop below the starting height to illustrate a fall larger than the rise."},
+          {"target": "down-route", "duration": 1.75, "to": {"draw": 1}, "meaning": "Trace the reversal without imitating an intraday price chart."},
+          {"target": "rise", "duration": 0.3, "to": {"opacity": 0}, "meaning": "Clear the previous phase label."},
+          {"target": "fall", "duration": 0.5, "to": {"opacity": 1}, "meaning": "Identify the one-day fall."}
+        ]}
+    },
+    {
+      "say": "नेपालमा तेइस र चौबीस नोभेम्बरमा भाउ बढ्दा,",
+      "keyword": "भाउ बढ्दा",
+      "visual": {"type": "scene", "scene": "market", "purpose": "Replace the illustration with a four-date chart of actual reported daily quotations.",
+        "actions": [
+          {"target": "rising-line", "duration": 2.5, "to": {"draw": 1}, "meaning": "Connect the November 22, 23 and 24 reported quotations."},
+          {"target": "point", "duration": 1.5, "to": {"x": 330, "y": 182.4}, "meaning": "Locate November 23's Rs 247400 quotation."},
+          {"target": "point", "cue": "भाउ", "duration": 0.5, "to": {"x": 510, "y": 170.4}, "meaning": "Continue to November 24's Rs 247900 quotation."}
+        ]}
+    },
+    {
+      "say": "तोलामा जम्मा पाँच हजार तीन सय रुपैयाँ थपिएको थियो।",
+      "keyword": "पाँच हजार",
+      "visual": {"type": "scene", "scene": "market", "purpose": "Hold the real dates and identify the accumulated rise.",
+        "actions": [
+          {"target": "chart", "duration": 3.4, "to": {"y": 16}, "meaning": "Reframe the price plot beneath the newly revealed quotation."},
+          {"target": "old-price", "duration": 0.6, "to": {"opacity": 1}, "meaning": "Show the November 24 quotation."},
+          {"target": "gain-amount", "duration": 0.6, "to": {"opacity": 1}, "meaning": "Show the verified Rs 5300 two-day change."}
+        ]}
+    },
+    {
+      "say": "तर पच्चीस नोभेम्बरमा छ हजार पाँच सय रुपैयाँ घटेपछि,",
+      "keyword": "घटेपछि",
+      "sound": {"kind": "pop", "cue": "छ"},
+      "visual": {"type": "scene", "scene": "market", "purpose": "Trace the actual one-day decline instead of labelling an unverified crash.",
+        "actions": [
+          {"target": "falling-line", "duration": 3, "to": {"draw": 1}, "meaning": "Connect November 24's Rs 247900 to November 25's Rs 241400."},
+          {"target": "point", "duration": 3, "to": {"x": 690, "y": 326.4}, "meaning": "Move the current marker to the latest reported daily point."},
+          {"target": "gain-amount", "duration": 0.4, "to": {"opacity": 0}, "meaning": "Clear the prior increase label."},
+          {"target": "fall-amount", "cue": "छ", "duration": 0.5, "to": {"opacity": 1}, "meaning": "Identify the Rs 6500 one-day decrease."}
+        ]}
+    },
+    {
+      "say": "दर दुई लाख एकचालीस हजार चार सयमा झर्‍यो।",
+      "keyword": "एकचालीस हजार",
+      "visual": {"type": "scene", "scene": "market", "purpose": "Give the exact dated quotation without suggesting a jewellery buyback price.",
+        "actions": [
+          {"target": "old-price", "duration": 0.4, "to": {"opacity": 0}, "meaning": "Remove the previous day's quotation."},
+          {"target": "new-price", "duration": 0.7, "to": {"opacity": 1}, "meaning": "Reveal Rs 241400 for November 25."},
+          {"target": "chart", "duration": 3, "to": {"scale": 0.94, "x": 23, "y": 32}, "meaning": "Pull the whole dated context back while foregrounding the latest quotation."}
+        ]}
+    },
+    {
+      "say": "अर्थात्, त्यो वृद्धि मेटिएर भाउ अझ बाह्र सय तल पुग्यो।",
+      "keyword": "अझ बाह्र सय",
+      "visual": {"type": "scene", "scene": "market", "purpose": "Use proportional change blocks to make the arithmetic visible.",
+        "actions": [
+          {"target": "chart", "duration": 0.5, "to": {"opacity": 0}, "meaning": "Move from daily prices to an explicit difference comparison."},
+          {"target": "old-price", "duration": 0.3, "to": {"opacity": 0}, "meaning": "Keep the comparison free of the previous price."},
+          {"target": "new-price", "duration": 0.3, "to": {"opacity": 0}, "meaning": "Clear the quotation for the arithmetic."},
+          {"target": "fall-amount", "duration": 0.3, "to": {"opacity": 0}, "meaning": "Remove the duplicated change number."},
+          {"target": "comparison", "duration": 0.6, "to": {"opacity": 1}, "meaning": "Show equal Rs 5300 blocks plus the proportional Rs 1200 extension."},
+          {"target": "gain-block", "duration": 1, "to": {"y": 155}, "meaning": "Match the earlier gain against the same-sized part of the subsequent fall."},
+          {"target": "gain-number", "duration": 1, "to": {"y": 223}, "meaning": "Keep its number attached as the equal blocks meet."},
+          {"target": "gain-block", "cue": "मेटिएर", "duration": 0.6, "to": {"opacity": 0}, "meaning": "Let the matched gain disappear, exposing the full fall and its extra tail."},
+          {"target": "gain-number", "cue": "मेटिएर", "duration": 0.6, "to": {"opacity": 0}, "meaning": "Remove the gain number before it could overlap the loss label."},
+          {"target": "extra-block", "cue": "अझ", "duration": 1.8, "to": {"x": 470}, "meaning": "Separate the extra Rs 1200 from the cancelled Rs 5300 to show what remains."},
+          {"target": "extra-label", "cue": "अझ", "duration": 1.8, "to": {"x": 502}, "meaning": "Keep the remainder annotation aligned to its separate block."}
+        ]}
+    },
+    {
+      "say": "तर यो सूचीकृत दर भएकाले, यसैलाई गहनाको बिल नसम्झनुहोस्।",
+      "keyword": "बिल नसम्झनुहोस्",
+      "visual": {"type": "scene", "scene": "receipt", "purpose": "Distinguish a metal quotation from a jewellery transaction.",
+        "actions": [
+          {"target": "necklace", "duration": 3.9, "to": {"y": 65, "scale": 1.08}, "meaning": "Inspect the actual jewellery illustration rather than equating it with a gold bar."},
+          {"target": "invoice", "duration": 4, "to": {"y": 130}, "meaning": "Bring a separate illustrative jewellery bill alongside it."}
+        ]}
+    },
+    {
+      "say": "किनकि बिलमा सुनको मूल्यसँगै ज्याला र अरू शुल्क जोडिन सक्छन्।",
+      "keyword": "ज्याला",
+      "visual": {"type": "scene", "scene": "receipt", "purpose": "Show why the invoice and quoted metal price are not interchangeable, without inventing fees.",
+        "actions": [
+          {"target": "making", "duration": 2.8, "to": {"opacity": 1}, "meaning": "Reveal a separate making/charges row in the same bill; assert no fixed amount."},
+          {"target": "invoice", "duration": 3.9, "to": {"x": 380, "y": 75, "scale": 1.08}, "meaning": "Inspect the expanded bill as its additional charge row is explained."}
+        ]}
+    },
+    {
+      "say": "बिहेको गहना किन्न बाँकी भएकालाई यो राहत हुन सक्छ,",
+      "keyword": "राहत",
+      "visual": {"type": "scene", "scene": "people", "purpose": "Show a fictional upcoming wedding purchase, not a universal recommendation.",
+        "actions": [
+          {"target": "bride", "duration": 2.9, "to": {"scale": 1.12, "y": 252}, "meaning": "Focus on the buyer who has yet to make the purchase."},
+          {"target": "price-arrow", "duration": 2.9, "to": {"y": 100}, "meaning": "Carry the same downward-price symbol into the household perspective."}
+        ]}
+    },
+    {
+      "say": "तर पहिल्यै किनिसकेको व्यक्तिलाई चाहिँ यही गिरावटले चिन्ता दिन सक्छ।",
+      "keyword": "चिन्ता",
+      "visual": {"type": "scene", "scene": "people", "purpose": "Contrast a prior buyer's concern with the upcoming buyer's relief, not a realised-loss claim.",
+        "actions": [
+          {"target": "bride", "duration": 3.7, "to": {"scale": 1, "y": 275, "opacity": 0.4}, "meaning": "Shift attention away from the upcoming purchase."},
+          {"target": "buyer", "duration": 3.7, "to": {"opacity": 1, "y": 275, "scale": 1.1}, "meaning": "Reveal the prior buyer still holding their gold."}
+        ]}
+    },
+    {
+      "say": "यसले सम्झाउँछ—सुरक्षित लगानी भनिए पनि सुनको भाउ घट्न सक्छ,",
+      "keyword": "घट्न सक्छ",
+      "visual": {"type": "scene", "scene": "risk", "purpose": "A shield does not make a market price unable to fall.",
+        "actions": [
+          {"target": "price-line", "duration": 3.2, "to": {"draw": 1}, "meaning": "Trace a conceptual rise and fall inside the safe-haven shield."},
+          {"target": "shield", "duration": 3.2, "to": {"scale": 0.94}, "meaning": "Bring the relationship between protection and price risk into focus."}
+        ]}
+    },
+    {
+      "say": "र दुई दिन बढ्दैमा गिरावट सकियो भन्न मिल्दैन।",
+      "keyword": "भन्न मिल्दैन",
+      "sound": {"kind": "tick", "cue": "मिल्दैन"},
+      "visual": {"type": "scene", "scene": "risk", "purpose": "End on uncertainty rather than a prediction, price target or instruction to trade.",
+        "actions": [
+          {"target": "shield", "duration": 3.5, "to": {"y": 38, "scale": 0.86, "x": 300}, "meaning": "Step back from the single market move rather than claiming its future direction."},
+          {"target": "unknown", "duration": 3.2, "to": {"opacity": 1, "x": 290, "y": 255}, "meaning": "Bring the unanswered next move beside, rather than into, the historical illustration."}
+        ]}
+    },
+    {
+      "say": "तपाईं सुन गहनाका लागि किन्नुहुन्छ, कि बचतका लागि?",
+      "keyword": "गहनाका",
+      "visual": {"type": "outro", "comment_keyword": "गहना कि बचत?"}
+    }
+  ]
+}

@@ -121,6 +121,147 @@ class ReelTests(unittest.TestCase):
             reel.narrate(config, self.root)
         self.assertEqual(calls, ["एनभिडिया फर्कियो"])
 
+    def test_scribe_narration_reads_words_and_fingerprints_inputs(self):
+        audio = self.root / "voice.mp3"
+        audio.write_bytes(b"voice")
+        timeline = self.root / "scribe.json"
+        timeline.write_text(json.dumps({"segments": [{"words": [
+            {"text": "पहिलो", "start_time": 0.1, "end_time": 0.4},
+            {"text": " ", "start_time": 0.4, "end_time": 0.5},
+            {"text": "कुरा", "start_time": 0.5, "end_time": 0.8},
+        ]}]}), encoding="utf-8")
+        self.config["voice"] = {"provider": "scribe", "audio": "voice.mp3", "timestamps": "scribe.json"}
+        path, config = reel.load_reel(self.write())
+        imported_audio, imported_words = reel.narrate(config, self.root, self.root)
+        self.assertEqual(imported_audio, audio)
+        self.assertEqual(imported_words, [{"text": "पहिलो", "start": 0.1, "end": 0.4},
+                                          {"text": "कुरा", "start": 0.5, "end": 0.8}])
+        before = reel.project_fingerprint(path, config)
+        audio.write_bytes(b"different")
+        self.assertNotEqual(before, reel.project_fingerprint(path, config))
+        before = reel.project_fingerprint(path, config)
+        timeline.write_text("{}", encoding="utf-8")
+        self.assertNotEqual(before, reel.project_fingerprint(path, config))
+        with self.assertRaisesRegex(StudioError, "must contain segments"):
+            reel.narrate(config, self.root, self.root)
+
+    def test_scribe_narration_rejects_missing_or_malformed_inputs(self):
+        self.config["voice"] = {"provider": "scribe", "audio": "voice.mp3", "timestamps": "scribe.json"}
+        _, config = reel.load_reel(self.write())
+        with self.assertRaisesRegex(StudioError, "audio not found"):
+            reel.narrate(config, self.root, self.root)
+        (self.root / "voice.mp3").write_bytes(b"voice")
+        (self.root / "scribe.json").write_text('{"segments":[{"words":[{"text":"x"}]}]}', encoding="utf-8")
+        _, imported = reel.narrate(config, self.root, self.root)
+        with self.assertRaisesRegex(StudioError, "invalid"):
+            reel.align([{"say": "x"}], imported)
+        (self.root / "scribe.json").write_text("{", encoding="utf-8")
+        with self.assertRaisesRegex(StudioError, "Cannot read Scribe timestamps"):
+            reel.narrate(config, self.root, self.root)
+
+    def story_config(self):
+        self.config["beats"] = [
+            {"say": "किन यस्तो हुन्छ?", "keyword": "किन", "visual": {"type": "stamp", "text": "?"}},
+            {"say": "यो कुरा,", "keyword": "कुरा", "visual": {"type": "stamp", "text": "A"}},
+            {"say": "यहाँ बुझिन्छ।", "keyword": "बुझिन्छ", "visual": {"type": "stamp", "text": "B"}},
+            {"say": "कमेन्ट गर्नुहोस्", "keyword": "कमेन्ट", "visual": {"type": "outro"}},
+        ]
+        self.config["story"] = {
+            "audience": "Nepali learners", "takeaway": "Understand one connection", "target_seconds": 25,
+            "hooks": ["किन यस्तो हुन्छ?", "यो कसरी सम्भव छ?", "यसको कारण के होला?"],
+            "selected_hook": 0,
+            "sections": [
+                {"role": "hook", "text": "किन यस्तो हुन्छ?"},
+                {"role": "explanation", "text": "यो कुरा, यहाँ बुझिन्छ।"},
+                {"role": "cta", "text": "कमेन्ट गर्नुहोस्"},
+            ],
+        }
+
+    def test_story_maps_one_sentence_to_multiple_caption_beats(self):
+        self.story_config()
+        _, config = reel.load_reel(self.write())
+        sections = reel.story_sections(config)
+        self.assertEqual((sections[1]["first"], sections[1]["last"]), (1, 2))
+        captured = []
+
+        async def fake_synthesize(text, voice, path, rate, pitch):
+            captured.append(text)
+            path.write_bytes(b"audio")
+            return words(("किन", 0), ("यस्तो", .4), ("हुन्छ", .8), ("यो", 1.2), ("कुरा", 1.6),
+                         ("यहाँ", 2), ("बुझिन्छ", 2.4), ("कमेन्ट", 2.8), ("गर्नुहोस्", 3.2))
+
+        with patch("katha.speech.synthesize", fake_synthesize):
+            _, provider_words = reel.narrate(config, self.root)
+        self.assertEqual(captured, ["किन यस्तो हुन्छ? यो कुरा, यहाँ बुझिन्छ। कमेन्ट गर्नुहोस्"])
+        self.assertEqual(reel.align(config["beats"], provider_words)[2][0]["text"], "यहाँ")
+
+    def test_story_rejects_text_drift_punctuation_and_split_section_boundaries(self):
+        for text in ("यो कुरा। यहाँ बुझिन्छ।", "यो कुरा, यहाँ हराउँछ।", "यो कुरा, यहाँ"):
+            with self.subTest(text=text):
+                self.story_config()
+                self.config["story"]["sections"][1]["text"] = text
+                self.assert_invalid("match consecutive beat captions exactly")
+        self.story_config()
+        self.config["story"]["sections"][1]["text"] = "यो कुरा,"
+        self.config["story"]["sections"][-1]["text"] = "यहाँ बुझिन्छ। कमेन्ट गर्नुहोस्"
+        self.assert_invalid("cta must map")
+
+    def test_story_rejects_invalid_brief_hooks_and_incomplete_coverage(self):
+        cases = [
+            ("audience", "", "non-empty"),
+            ("target_seconds", True, "story.target_seconds"),
+            ("target_seconds", float("nan"), "story.target_seconds"),
+            ("selected_hook", True, "index"),
+            ("selected_hook", 1, "selected hook exactly"),
+            ("hooks", ["किन", "किन", "कसरी"], "distinct"),
+            ("hooks", [" ".join(["word"] * 9), "किन", "कसरी"], "at most 8"),
+        ]
+        for field, value, message in cases:
+            with self.subTest(field=field, value=value):
+                self.story_config()
+                self.config["story"][field] = value
+                self.assert_invalid(message)
+        self.story_config()
+        self.config["story"]["sections"][1]["role"] = "hook"
+        self.assert_invalid("only hook")
+        self.story_config()
+        self.config["story"]["sections"][-1]["role"] = "result"
+        self.assert_invalid("only cta")
+        self.story_config()
+        self.config["story"]["sections"][1]["role"] = []
+        self.assert_invalid("supported role")
+        self.story_config()
+        self.config["beats"].append(self.config["beats"][-1].copy())
+        self.config["beats"][-2]["visual"] = {"type": "stamp", "text": "Extra"}
+        self.assert_invalid("cta must map")
+
+    def test_story_rejects_overlong_caption_without_limiting_sentence_length(self):
+        self.story_config()
+        text = "one two three four five six seven eight nine ten eleven"
+        self.config["beats"][1]["say"] = text
+        self.config["beats"][1]["keyword"] = "one"
+        self.config["story"]["sections"][1]["text"] = text + " यहाँ बुझिन्छ।"
+        self.assert_invalid("caption exceeds 10 words")
+
+    def test_story_timing_failure_writes_plan_without_rendering(self):
+        self.story_config()
+        path = self.write()
+        beat_words = [words(("किन", .1)), words(("यो", 2.1)),
+                      words(("यहाँ", 4.1)), words(("कमेन्ट", 6.1))]
+        times = [(0, 2), (2, 4), (4, 6), (6, 9)]
+        events = [[0], [2], [4], [6]]
+        result = (self.root / "voice.mp3", sum(beat_words, []), beat_words, times, [], events)
+        with patch("katha.reel.build", return_value=result), patch("katha.reel.audio_duration", return_value=7), \
+                patch("katha.reel.render_video") as render:
+            with self.assertRaisesRegex(StudioError, "story_target_seconds"):
+                reel.reel(path)
+        render.assert_not_called()
+        plan = (self.root / "output" / "project-storyboard.md").read_text(encoding="utf-8")
+        self.assertIn("यो कुरा, यहाँ बुझिन्छ।", plan)
+        self.assertIn("Nepali learners", plan)
+        self.assertIn("[selected]", plan)
+        self.assertTrue(reel.story_timing_checks(self.config, [(0, 25)])[0]["pass"])
+
     def test_visual_pacing_counts_story_reveals_not_beat_motion(self):
         times = [(0.0, 5.5), (5.5, 8.0), (8.0, 12.0)]
         checks = reel.visual_pacing(times, [[0.0, 2.8], [5.5], [8.0]])

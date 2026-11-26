@@ -18,8 +18,9 @@ npm ci   # installs HyperFrames and GSAP 3.13.0
 ```
 
 FFmpeg/ffprobe must be on PATH, and HyperFrames needs Node 22+ and Chrome.
-Narration uses the online Microsoft Edge voice service through `edge-tts`. Check
-its terms, and send it only text you are allowed to share.
+The default narration uses the online Microsoft Edge voice service through
+`edge-tts`. Check its terms, and send it only text you are allowed to share.
+Alternatively, import local narration and its Scribe word timestamps.
 
 ## Run
 
@@ -63,7 +64,8 @@ See [`examples/reel/jensen-huang.json`](../examples/reel/jensen-huang.json).
 | --- | --- |
 | `title`, `topic` | Storyboard title; topic label in the header |
 | `profile` | Use `visual_storytelling` for new production. Omission retains `legacy` compatibility with older component scripts |
-| `voice` | `provider: edge`, `name` (default `ne-NP-SagarNeural`), `rate` such as `+8%`, `pitch` such as `-2Hz` |
+| `story` | Narration-first brief, hook candidates and sections; required by the production workflow for new reels, optional in the loader for existing projects |
+| `voice` | `provider: edge`, `name` (default `ne-NP-SagarNeural`), `rate` and `pitch`; or `provider: scribe` with project-relative `audio` and `timestamps` paths |
 | `music` | `seed`, `bpm` (60–140), `volume` (0–1, before ducking), `duck_ratio` (1–12, default 3); optional `asset` references local licensed/original audio instead of synthesis |
 | `sfx.volume` | Independent effect gain, 0–1 (default 0.18); no automatic effect on every transition |
 | `assets`, `scenes` | Local-media manifest and persistent visual scene definitions; see below |
@@ -75,12 +77,20 @@ See [`examples/reel/jensen-huang.json`](../examples/reel/jensen-huang.json).
 
 Each beat has:
 
-- `say`: authoritative on-screen caption. Keep it to about 10 words or fewer.
+- `say`: authoritative caption slice, at most 10 words. It need not be a sentence: preserve the continuous narration's punctuation across beats.
 - `pronunciations` (optional): map individual caption words to their spoken form.
 - `keyword`: whole caption words that get the accent marker in the headline.
 - `visual`: the beat's animated component.
 - `sound` (optional): `{"kind":"pop","cue":"word"}`. At most one editorial effect per beat; omit for silence. Kinds: `pop`, `tick`, `stamp`, `chime`, `whoosh`. No cue means beat start.
 - `step` and `step_title` (optional): turn the beat into numbered point 1..N. The header then shows the step and segment progress.
+
+For existing narration, `voice: {"provider":"scribe","audio":"narration.mp3",
+"timestamps":"scribe.json"}` imports the provided audio and Scribe's
+`segments[].words[]` (`text`, `start_time`, `end_time`). Whitespace entries
+are ignored. Caption words still have to align with the transcript; use
+pronunciation overrides for transcript normalization differences, and review
+the transcription and synchronization by listening. Both input files are
+included in the export fingerprint; mismatches and invalid timings fail.
 
 For example:
 
@@ -100,6 +110,66 @@ each occurrence of that word in the beat. Cues and keywords refer to the
 **caption** words, not the replacement. The producer must supply and review
 appropriate spellings; the pipeline does not automatically transliterate text
 or verify pronunciation. A wrong or unused key is an error.
+
+### Narration first, caption beats second
+
+The renderer already synthesizes the entire script in one request. The earlier
+beat-first authoring convention encouraged disconnected headline fragments;
+the fix is not adding pauses or just increasing the words allowed on screen.
+Write the complete explanation first, using connected clauses and varied
+sentence lengths, then segment it for captions and visual cues.
+
+New productions include a `story` object. See
+[`gold-reversal.json`](../examples/reel/gold-reversal.json) for the full example:
+
+```json
+{
+  "audience": "Nepali household gold buyers",
+  "takeaway": "Quoted gold rates and jewellery bills are different.",
+  "target_seconds": 50,
+  "hooks": [
+    "सुनको दुई दिनको वृद्धि, एकै दिनमै मेटियो!",
+    "सुन घट्यो, तर गहनाको बिल नि?",
+    "सुनको भाउ बढ्दैमा जोखिम सकिन्छ?"
+  ],
+  "selected_hook": 0,
+  "sections": [
+    {"role": "hook", "text": "सुनको दुई दिनको वृद्धि, एकै दिनमै मेटियो!"},
+    {"role": "explanation", "text": "Write the connected explanation here."},
+    {"role": "cta", "text": "Write the final question here."}
+  ]
+}
+```
+
+This is the shape of the `story` value, not a standalone render project.
+Replace the placeholder narration and supply matching `beats`.
+
+- `audience` and `takeaway` must be non-empty; `target_seconds` is 20-150
+  seconds including the outro hold.
+- Provide exactly three distinct hook candidates, each at most eight
+  whitespace-separated words. `selected_hook` is a zero-based index.
+  The opening section must match that candidate exactly.
+- Provide 3-12 sections. Supported roles: `hook`, `context`, `problem`,
+  `explanation`, `step`, `result`, `impact`, `caveat`, `cta`. Only the first
+  section is `hook`; only the last is `cta`. Choose middle sections for the
+  subject: news need not pretend to be a three-step tutorial.
+- Each section's text must equal consecutive complete `say` slices in order,
+  including punctuation (whitespace differences are allowed). A sentence
+  may cross caption boundaries; a narrative section must end at one.
+  Every beat must be covered, and the CTA maps only to the outro.
+  This checked repetition keeps the readable full script and the timed
+  captions from drifting. Pronunciation overrides still operate per beat.
+- Before rendering, the measured preview duration must be within 15% of
+  target, with at least three seconds of tolerance. The same check appears
+  in QA and gates export. Revise the script or explicitly reconsider its
+  target; do not silently speed up speech or pad the video.
+
+The storyboard shows the audience, takeaway, candidate hooks, continuous
+narration and timed narrative sections before its caption/visual table.
+These checks cannot establish naturalness, narrative logic, hook quality,
+factual accuracy or pronunciation. A producer must review those separately.
+Existing projects without `story` still load unchanged; no semantic score or
+automatic topic-to-script generator is implied.
 
 Word boundaries are mapped back to the original caption tokens, including
 punctuation. If a provider splits one displayed word into several boundaries,
@@ -139,6 +209,15 @@ with a synchronized Earth-view disc. Its labels are supporting annotations, not
 the whole story. The top view is schematic: sizes, distances and orbital tilt
 are omitted; the approximately 29.5-day phase cycle is not a sidereal orbit
 measurement. Its phase display is idealized, not a local sky forecast.
+
+[`gold-reversal.json`](../examples/reel/gold-reversal.json) is a dated Nepal
+economy example with a persistent gold ingot, a sourced daily-price chart,
+proportional change blocks and an illustrated jewellery bill. Run
+`python -m katha reel examples\reel\gold-reversal.json` to recreate its review
+preview. Its November 22-25, 2026 quotations are historical inputs, not live
+prices; recheck the linked sources before repurposing it as current news.
+The chart explicitly labels its truncated axis, and the script distinguishes
+quoted gold rates from jewellery bills without predicting future prices.
 
 Minimal scene excerpt (inside a normal reel project):
 
@@ -252,8 +331,9 @@ copy. See
 ## How it works
 
 1. **Narration and alignment.** Optional pronunciation overrides are applied
-   before `edge-tts`. Provider word boundaries are mapped back to the original
-   `say` tokens. Ambiguous or mismatched boundaries stop the build.
+   before `edge-tts`, or matched against the supplied Scribe transcript.
+   Provider word boundaries are mapped back to the original `say` tokens.
+   Ambiguous or mismatched boundaries stop the build.
 2. **Timing.** Each beat starts 0.12 s before its first word. The outro holds for `outro.tail`.
 3. **Plan and pacing.** The pipeline writes the timed storyboard before the
    preview render. It checks the interval between planned story-content reveals

@@ -1,6 +1,6 @@
 """Beat-based branded reel pipeline: script -> narration -> HyperFrames composition -> mix -> QA -> export.
 
-Every beat is one short spoken line with a highlighted keyword and one visual component. Narration word
+Every beat is a caption-sized slice of continuous narration, with a keyword and visual component. Word
 timestamps drive every caption word, component reveal and sound effect, so the frame follows the voice.
 """
 import asyncio
@@ -58,13 +58,17 @@ def load_reel(path):
     _text(config.get("title"), "title")
     _text(config.get("topic"), "topic")
     voice = config.setdefault("voice", {})
-    if not isinstance(voice, dict) or voice.get("provider", "edge") != "edge":
-        raise StudioError("voice.provider must be edge")
-    voice.setdefault("name", "ne-NP-SagarNeural")
-    voice.setdefault("rate", "+8%")
-    voice.setdefault("pitch", "+0Hz")
-    if not re.fullmatch(r"[+-]\d{1,2}%", str(voice["rate"])) or not re.fullmatch(r"[+-]\d{1,3}Hz", str(voice["pitch"])):
-        raise StudioError('voice.rate must look like "+8%" and voice.pitch like "-2Hz"')
+    if not isinstance(voice, dict) or voice.get("provider", "edge") not in ("edge", "scribe"):
+        raise StudioError("voice.provider must be edge or scribe")
+    if voice.get("provider", "edge") == "scribe":
+        _text(voice.get("audio"), "voice.audio")
+        _text(voice.get("timestamps"), "voice.timestamps")
+    else:
+        voice.setdefault("name", "ne-NP-SagarNeural")
+        voice.setdefault("rate", "+8%")
+        voice.setdefault("pitch", "+0Hz")
+        if not re.fullmatch(r"[+-]\d{1,2}%", str(voice["rate"])) or not re.fullmatch(r"[+-]\d{1,3}Hz", str(voice["pitch"])):
+            raise StudioError('voice.rate must look like "+8%" and voice.pitch like "-2Hz"')
     music = config.setdefault("music", {})
     if not isinstance(music, dict):
         raise StudioError("music must be an object")
@@ -140,6 +144,7 @@ def load_reel(path):
         raise StudioError("Beat steps must not go backwards")
     if steps and sorted(set(steps)) != list(range(1, max(steps) + 1)):
         raise StudioError("Beat steps must be numbered 1..N without gaps")
+    story_sections(config)
     brand_path = (path.parent / config.get("brand", REPO / "brand" / "brand.json")).resolve()
     config["_brand"] = load_brand(brand_path)
     scenes.validate(config)
@@ -207,6 +212,71 @@ def speech_parts(beat, index):
     if unused:
         raise StudioError(f"Beat {index} pronunciation does not match a display word: {', '.join(sorted(unused))}")
     return [(token, normalized.get(key(token), token)) for token in tokens]
+
+
+def story_sections(config):
+    """Validate a narration-first brief and map its sections onto exact caption slices."""
+    if "story" not in config:
+        return []
+    story = config["story"]
+    if not isinstance(story, dict):
+        raise StudioError("story must be an object")
+    for field in ("audience", "takeaway"):
+        _text(story.get(field), f"story.{field}")
+    scenes.number(story.get("target_seconds"), "story.target_seconds", *LIMITS["duration"])
+    hooks = story.get("hooks")
+    if not isinstance(hooks, list) or len(hooks) != 3:
+        raise StudioError("story.hooks must contain three original hook candidates")
+    for hook in hooks:
+        _text(hook, "story hook")
+        if not key(hook) or len(hook.split()) > 8:
+            raise StudioError("Each story hook must contain spoken words and at most 8 words")
+    if len({key(hook) for hook in hooks}) != 3:
+        raise StudioError("story.hooks must be distinct")
+    selected = story.get("selected_hook")
+    if isinstance(selected, bool) or not isinstance(selected, int) or not 0 <= selected < 3:
+        raise StudioError("story.selected_hook must be an index from 0 to 2")
+    sections = story.get("sections")
+    roles = {"hook", "context", "problem", "explanation", "step", "result", "impact", "caveat", "cta"}
+    if not isinstance(sections, list) or not 3 <= len(sections) <= 12:
+        raise StudioError("story.sections must contain 3-12 narrative sections")
+    beats, cursor, mapped = config["beats"], 0, []
+    for index, section in enumerate(sections):
+        if (not isinstance(section, dict) or not isinstance(section.get("role"), str)
+                or section["role"] not in roles):
+            raise StudioError("Each story section needs a supported role")
+        role = section["role"]
+        if (role == "hook") != (index == 0) or (role == "cta") != (index == len(sections) - 1):
+            raise StudioError("Story must start with its only hook and end with its only cta")
+        text = _text(section.get("text"), f"story section {index + 1} text")
+        if index == 0 and text.split() != hooks[selected].split():
+            raise StudioError("Story opening must match the selected hook exactly")
+        start, tokens = cursor, []
+        while cursor < len(beats) and len(tokens) < len(text.split()):
+            beat = beats[cursor]
+            if len(speech_parts(beat, cursor + 1)) > LIMITS["beat_words"]:
+                raise StudioError(f"Beat {cursor + 1} caption exceeds 10 words; split it without rewriting the narration")
+            tokens.extend(beat["say"].split())
+            cursor += 1
+        if tokens != text.split():
+            raise StudioError(f"Story section {index + 1} must match consecutive beat captions exactly, including punctuation")
+        if role == "cta" and start != len(beats) - 1:
+            raise StudioError("Story cta must map to the final outro beat only")
+        mapped.append({"role": role, "text": text, "first": start, "last": cursor - 1})
+    if cursor != len(beats):
+        raise StudioError("Story sections must cover every caption beat")
+    return mapped
+
+
+def story_timing_checks(config, times):
+    if "story" not in config:
+        return []
+    target = config["story"]["target_seconds"]
+    duration = times[-1][1]
+    tolerance = max(3.0, target * 0.15)
+    return [{"check": "story_target_seconds", "value": round(duration, 2),
+             "limit": f"{target - tolerance:.1f}-{target + tolerance:.1f}",
+             "pass": abs(duration - target) <= tolerance}]
 
 
 def align(beats, words):
@@ -523,9 +593,32 @@ def file_hash(*parts):
     return digest.hexdigest()[:16]
 
 
-def narrate(config, cache):
-    from .speech import synthesize
+def narrate(config, cache, project_dir=None):
     voice = config["voice"]
+    if voice.get("provider", "edge") == "scribe":
+        if project_dir is None:
+            raise StudioError("Scribe narration needs a project directory")
+        audio = (project_dir / voice["audio"]).resolve()
+        timestamps = (project_dir / voice["timestamps"]).resolve()
+        if not audio.is_file():
+            raise StudioError(f"Narration audio not found: {audio}")
+        try:
+            data = json.loads(timestamps.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise StudioError(f"Cannot read Scribe timestamps {timestamps}: {exc}") from exc
+        if not isinstance(data, dict) or not isinstance(data.get("segments"), list) or not data["segments"]:
+            raise StudioError("Scribe timestamps must contain segments")
+        words = []
+        for segment in data["segments"]:
+            if not isinstance(segment, dict) or not isinstance(segment.get("words"), list):
+                raise StudioError("Scribe segments must contain word timestamps")
+            for word in segment["words"]:
+                if not isinstance(word, dict) or not isinstance(word.get("text"), str):
+                    raise StudioError("Scribe word timestamps are invalid")
+                if word["text"].strip():
+                    words.append({"text": word["text"], "start": word.get("start_time"), "end": word.get("end_time")})
+        return audio, words
+    from .speech import synthesize
     script = " ".join(spoken for index, beat in enumerate(config["beats"], 1)
                       for _, spoken in speech_parts(beat, index))
     stem = "voice-" + file_hash(script, voice["name"], voice["rate"], voice["pitch"])
@@ -574,7 +667,7 @@ def build(project_path, config, work_dir):
     for name in ("reel.js",):
         shutil.copyfile(ASSETS / name, assets_dir / name)
     shutil.copyfile(gsap, assets_dir / "gsap.min.js")
-    voice, words = narrate(config, cache)
+    voice, words = narrate(config, cache, project_path.parent)
     beat_words = align(config["beats"], words)
     times = timing(beat_words, config["outro"]["tail"])
     images = collect_images(config, project_path.parent, cache, assets_dir)
@@ -707,7 +800,7 @@ def hex_rgb(value):
 def quality(video, config, words, beat_words, times, visual_events):
     duration = times[-1][1]
     spoken = words[-1]["end"] - words[0]["start"]
-    checks = visual_pacing(times, visual_events) + storytelling_checks(config, times)
+    checks = visual_pacing(times, visual_events) + storytelling_checks(config, times) + story_timing_checks(config, times)
 
     def check(name, value, ok, limit):
         checks.append({"check": name, "value": value, "limit": limit, "pass": bool(ok)})
@@ -769,9 +862,27 @@ def storyboard_plan(config, times, visual_events, markdown):
     def cell(value):
         return str(value).replace("|", r"\|").replace("\n", " ")
 
-    lines = [f"# Storyboard: {config['title']}", "",
-             "| # | Time | Visual | Reveals (s) | Keyword | Caption | Pronunciation |",
-             "|---|---|---|---|---|---|---|"]
+    lines = [f"# Storyboard: {config['title']}", ""]
+    sections = story_sections(config)
+    if sections:
+        story = config["story"]
+        lines += ["## Story brief", f"- Audience: {story['audience']}",
+                  f"- Takeaway: {story['takeaway']}",
+                  f"- Target: {story['target_seconds']}s; measured preview: {times[-1][1]:.1f}s.",
+                  "", "### Hook candidates"]
+        lines += [f"- {'[selected] ' if i == story['selected_hook'] else ''}{hook}"
+                  for i, hook in enumerate(story["hooks"])]
+        lines += ["", "## Continuous narration", "",
+                  " ".join(section["text"] for section in sections), "", "## Narrative sections", "",
+                  "| Role | Time | Caption beats | Narration |", "|---|---|---|---|"]
+        for section in sections:
+            first, last = section["first"], section["last"]
+            lines.append(f"| {section['role']} | {times[first][0]:.1f}-{times[last][1]:.1f}s | "
+                         f"{first + 1}-{last + 1} | {cell(section['text'])} |")
+        lines += ["", "Structural checks cannot establish natural speech, a compelling hook or factual accuracy.", ""]
+    lines += ["## Caption and visual beats", "",
+              "| # | Time | Visual | Reveals (s) | Keyword | Caption | Pronunciation |",
+              "|---|---|---|---|---|---|---|"]
     for n, (beat, (s, e), events) in enumerate(zip(config["beats"], times, visual_events), 1):
         reveals = ", ".join(f"{at:.1f}" for at in sorted(set(events)))
         spoken = " ".join(spoken for _, spoken in speech_parts(beat, n))
@@ -812,6 +923,9 @@ def project_fingerprint(path, config):
             Path(scenes.__file__).read_bytes(),
             (ASSETS / "reel.js").read_bytes(), (ASSETS / "reel.css").read_bytes()]
     dependencies = scenes.local_files(config, Path(path).parent)
+    if config["voice"].get("provider", "edge") == "scribe":
+        dependencies += [(f"voice-{name}", (Path(path).parent / config["voice"][name]).resolve())
+                         for name in ("audio", "timestamps")]
     dependencies += [(f"photo-{i}", (Path(path).parent / b["visual"]["src"]).resolve())
                      for i, b in enumerate(config["beats"], 1)
                      if b["visual"]["type"] == "photo" and b["visual"].get("src")]
@@ -871,11 +985,12 @@ def reel(project, approval=None):
     plan_path = out_dir / f"{stem}-storyboard.md"
     storyboard_plan(config, times, visual_events, plan_path)
     print(f"Storyboard plan: {plan_path}")
-    pacing = visual_pacing(times, visual_events) + storytelling_checks(config, times)
+    pacing = visual_pacing(times, visual_events) + storytelling_checks(config, times) + story_timing_checks(config, times)
     failed_pacing = [c for c in pacing if not c["pass"]]
     if failed_pacing:
         detail = ", ".join(f"{c['check']}: {c['value']}" for c in failed_pacing)
-        raise StudioError(f"Story-content reveal gap exceeds {LIMITS['visual_gap']}s: {detail}; split or add cued content")
+        raise StudioError(f"Preflight failed (visual reveal gap or story timing): {detail}; "
+                          "adjust cued content or revise narration toward its target duration")
     print(f"Rendering {duration:.1f}s with HyperFrames...")
     silent = build_dir / "silent.mp4"
     render_video(build_dir / "composition", silent)
